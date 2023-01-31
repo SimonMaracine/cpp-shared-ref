@@ -1,5 +1,6 @@
 #include <iostream>
 #include <utility>
+#include <unordered_map>
 
 #include <shared_pointer/shared_pointer.hpp>
 
@@ -24,4 +25,9 @@ int main() {
     }
 
     PRINT_INFO(ptr1)
+
+    {
+        std::unordered_map<sm::SharedPtr<int>, int> map;
+        map[sm::make_shared<int>(19)] = 82763;
+    }
 }

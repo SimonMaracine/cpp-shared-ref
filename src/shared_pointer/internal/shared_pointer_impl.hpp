@@ -5,6 +5,8 @@
 #include <utility>
 #include <cstddef>
 
+#include "control_block.hpp"
+
 namespace sm {
     template <typename T>
     class SharedPtr {
@@ -13,8 +15,8 @@ namespace sm {
         explicit SharedPtr(T* object);
         ~SharedPtr();
 
-        SharedPtr(const SharedPtr& other);
-        SharedPtr& operator=(const SharedPtr& other);
+        SharedPtr(const SharedPtr& other) noexcept;
+        SharedPtr& operator=(const SharedPtr& other) noexcept;
         SharedPtr(SharedPtr&& other) noexcept;
         SharedPtr& operator=(SharedPtr&& other) noexcept;
 
@@ -28,21 +30,10 @@ namespace sm {
         T* get() const;
         size_t use_count() const;
     private:
-        struct ControlBlock {
-            union {
-                T* pointer;
-                T instance;
-            } object;
-
-            size_t ref_count = 0;
-
-            // TODO weak count
-        };
-
-        SharedPtr(ControlBlock* block);
+        SharedPtr(internal::ControlBlock<T>* block);
         void destroy_this_pointer() noexcept;
 
-        ControlBlock* block = nullptr;
+        internal::ControlBlock<T>* block = nullptr;
         T* object = nullptr;  // Direct access to object
 
         template<typename U, typename... Args>
@@ -50,8 +41,8 @@ namespace sm {
     };
 
     template <typename T>
-    SharedPtr<T>::SharedPtr(T *object) {
-        block = new ControlBlock;
+    SharedPtr<T>::SharedPtr(T* object) {
+        block = new internal::ControlBlock<T>;
         block->ref_count = 1;
         block->object.pointer = object;
 
@@ -64,14 +55,14 @@ namespace sm {
     }
 
     template <typename T>
-    SharedPtr<T>::SharedPtr(const SharedPtr& other)
+    SharedPtr<T>::SharedPtr(const SharedPtr& other) noexcept
         : block(other.block), object(other.object) {
 
         block->ref_count++;
     }
 
     template<typename T>
-    SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr& other) {
+    SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr& other) noexcept {
         destroy_this_pointer();
 
         block = other.block;
@@ -137,7 +128,7 @@ namespace sm {
     }
 
     template<typename T>
-    SharedPtr<T>::SharedPtr(ControlBlock* block)
+    SharedPtr<T>::SharedPtr(internal::ControlBlock<T>* block)
         : block(block), object(&block->object.instance) {}
 
     template<typename T>
@@ -156,7 +147,7 @@ namespace sm {
 
     template<typename T, typename... Args>
     SharedPtr<T> make_shared(Args&&... args) {
-        typename SharedPtr<T>::ControlBlock* block = new typename SharedPtr<T>::ControlBlock;
+        internal::ControlBlock<T>* block = new internal::ControlBlock<T>;
         block->ref_count = 1;
         ::new(&block->object.instance) T(std::forward<Args>(args)...);
 
