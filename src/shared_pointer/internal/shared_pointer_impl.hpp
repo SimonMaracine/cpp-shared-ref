@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-
+#include <iostream>
 #include <utility>
 #include <cstddef>
 
@@ -10,13 +10,13 @@ namespace sm {
     class SharedPtr {
     public:
         SharedPtr() = default;
-        SharedPtr(T* object);
+        explicit SharedPtr(T* object);
         ~SharedPtr();
 
         SharedPtr(const SharedPtr& other);
         SharedPtr& operator=(const SharedPtr& other);
-        SharedPtr(SharedPtr&& other);
-        SharedPtr& operator=(SharedPtr&& other);
+        SharedPtr(SharedPtr&& other) noexcept;
+        SharedPtr& operator=(SharedPtr&& other) noexcept;
 
         T& operator->() const;
         T& operator*() const;
@@ -27,11 +27,10 @@ namespace sm {
 
         T* get() const;
         size_t use_count() const;
-        bool unique() const;
     private:
         struct ControlBlock {
             union {
-                T* ptr;
+                T* pointer;
                 T instance;
             } object;
 
@@ -41,10 +40,10 @@ namespace sm {
         };
 
         SharedPtr(ControlBlock* block);
-        void destroy_this_pointer();
+        void destroy_this_pointer() noexcept;
 
         ControlBlock* block = nullptr;
-        T* object = nullptr;
+        T* object = nullptr;  // Direct access to object
 
         template<typename U, typename... Args>
         friend SharedPtr<U> make_shared(Args&&... args);
@@ -52,8 +51,11 @@ namespace sm {
 
     template <typename T>
     SharedPtr<T>::SharedPtr(T *object) {
-        // this->object = object;  // FIXME this
+        block = new ControlBlock;
         block->ref_count = 1;
+        block->object.pointer = object;
+
+        this->object = object;
     }
 
     template <typename T>
@@ -62,9 +64,8 @@ namespace sm {
     }
 
     template <typename T>
-    SharedPtr<T>::SharedPtr(const SharedPtr& other) {
-        block = other.block;
-        object = other.object;
+    SharedPtr<T>::SharedPtr(const SharedPtr& other)
+        : block(other.block), object(other.object) {
 
         block->ref_count++;
     }
@@ -82,13 +83,24 @@ namespace sm {
     }
 
     template<typename T>
-    SharedPtr<T>::SharedPtr(SharedPtr&& other) {
-        // TODO implement
+    SharedPtr<T>::SharedPtr(SharedPtr&& other) noexcept
+        : block(other.block), object(other.object) {
+
+        other.block = nullptr;
+        other.object = nullptr;
     }
 
     template<typename T>
-    SharedPtr<T>& SharedPtr<T>::operator=(SharedPtr&& other) {
-        // TODO implement
+    SharedPtr<T>& SharedPtr<T>::operator=(SharedPtr&& other) noexcept {
+        destroy_this_pointer();
+
+        block = other.block;
+        object = other.object;
+
+        other.block = nullptr;
+        other.object = nullptr;
+
+        return *this;
     }
 
     template<typename T>
@@ -109,6 +121,7 @@ namespace sm {
     template<typename T>
     void SharedPtr<T>::reset() {
         destroy_this_pointer();
+
         object = nullptr;
         block = nullptr;
     }
@@ -124,16 +137,15 @@ namespace sm {
     }
 
     template<typename T>
-    bool SharedPtr<T>::unique() const {
-        return block->ref_count == 1;
-    }
-
-    template<typename T>
     SharedPtr<T>::SharedPtr(ControlBlock* block)
         : block(block), object(&block->object.instance) {}
 
     template<typename T>
-    void SharedPtr<T>::destroy_this_pointer() {
+    void SharedPtr<T>::destroy_this_pointer() noexcept {
+        if (block == nullptr) {
+            return;
+        }
+
         block->ref_count--;
 
         if (block->ref_count == 0) {
@@ -150,4 +162,20 @@ namespace sm {
 
         return SharedPtr<T>(block);
     }
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& stream, const sm::SharedPtr<T>& pointer) {
+    stream << pointer.get();
+
+    return stream;
+}
+
+namespace std {
+    template<typename T>
+    struct hash<sm::SharedPtr<T>> {
+        size_t operator()(const sm::SharedPtr<T>& pointer) const {
+            return hash<T*> {}(pointer.get());
+        }
+    };
 }
