@@ -10,8 +10,7 @@ namespace sm {
             } object;
 
             size_t ref_count = 0;
-
-            // TODO weak count
+            size_t weak_count = 0;
         };
     }
 }

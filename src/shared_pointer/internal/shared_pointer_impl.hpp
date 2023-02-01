@@ -6,6 +6,7 @@
 #include <cstddef>
 
 #include "control_block.hpp"
+// #include "weak_pointer.hpp"
 
 namespace sm {
     template <typename T>
@@ -38,6 +39,9 @@ namespace sm {
 
         template<typename U, typename... Args>
         friend SharedPtr<U> make_shared(Args&&... args);
+
+        template<typename U>
+        friend class WeakPtr;
     };
 
     template <typename T>
@@ -57,13 +61,12 @@ namespace sm {
     template <typename T>
     SharedPtr<T>::SharedPtr(const SharedPtr& other) noexcept
         : block(other.block), object(other.object) {
-
         block->ref_count++;
     }
 
     template<typename T>
     SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr& other) noexcept {
-        destroy_this_pointer();
+        destroy_this_pointer();  // TODO not quite right
 
         block = other.block;
         object = other.object;
@@ -76,7 +79,6 @@ namespace sm {
     template<typename T>
     SharedPtr<T>::SharedPtr(SharedPtr&& other) noexcept
         : block(other.block), object(other.object) {
-
         other.block = nullptr;
         other.object = nullptr;
     }
