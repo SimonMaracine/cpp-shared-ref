@@ -1,25 +1,26 @@
 #pragma once
 
-#include <memory>
-#include <iostream>
+#include <ostream>
 #include <utility>
 #include <cstddef>
 
-#include "control_block.hpp"
+#include "internal/control_block.hpp"
 // #include "weak_pointer.hpp"
 
 namespace sm {
     template <typename T>
-    class SharedPtr {
+    class SharedRef {
     public:
-        SharedPtr() = default;
-        explicit SharedPtr(T* object);
-        ~SharedPtr();
+        SharedRef() = default;
+        explicit SharedRef(T* object);
+        ~SharedRef();
 
-        SharedPtr(const SharedPtr& other) noexcept;
-        SharedPtr& operator=(const SharedPtr& other) noexcept;
-        SharedPtr(SharedPtr&& other) noexcept;
-        SharedPtr& operator=(SharedPtr&& other) noexcept;
+        // TODO polymorphism support
+
+        SharedRef(const SharedRef& other) noexcept;
+        SharedRef& operator=(const SharedRef& other) noexcept;
+        SharedRef(SharedRef&& other) noexcept;
+        SharedRef& operator=(SharedRef&& other) noexcept;
 
         T& operator->() const;
         T& operator*() const;
@@ -31,21 +32,21 @@ namespace sm {
         T* get() const;
         size_t use_count() const;
     private:
-        SharedPtr(internal::ControlBlock<T>* block);
-        void destroy_this_pointer() noexcept;
+        SharedRef(internal::ControlBlock<T>* block);
+        void destroy_this() noexcept;
 
         internal::ControlBlock<T>* block = nullptr;
         T* object = nullptr;  // Direct access to object
 
         template<typename U, typename... Args>
-        friend SharedPtr<U> make_shared(Args&&... args);
+        friend SharedRef<U> make_shared(Args&&... args);
 
         template<typename U>
-        friend class WeakPtr;
+        friend class WeakRef;
     };
 
     template <typename T>
-    SharedPtr<T>::SharedPtr(T* object) {
+    SharedRef<T>::SharedRef(T* object) {
         block = new internal::ControlBlock<T>;
         block->ref_count = 1;
         block->object.pointer = object;
@@ -54,19 +55,19 @@ namespace sm {
     }
 
     template <typename T>
-    SharedPtr<T>::~SharedPtr() {
-        destroy_this_pointer();
+    SharedRef<T>::~SharedRef() {
+        destroy_this();
     }
 
     template <typename T>
-    SharedPtr<T>::SharedPtr(const SharedPtr& other) noexcept
+    SharedRef<T>::SharedRef(const SharedRef& other) noexcept
         : block(other.block), object(other.object) {
         block->ref_count++;
     }
 
     template<typename T>
-    SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr& other) noexcept {
-        destroy_this_pointer();  // TODO not quite right
+    SharedRef<T>& SharedRef<T>::operator=(const SharedRef& other) noexcept {
+        destroy_this();  // TODO not quite right
 
         block = other.block;
         object = other.object;
@@ -77,15 +78,15 @@ namespace sm {
     }
 
     template<typename T>
-    SharedPtr<T>::SharedPtr(SharedPtr&& other) noexcept
+    SharedRef<T>::SharedRef(SharedRef&& other) noexcept
         : block(other.block), object(other.object) {
         other.block = nullptr;
         other.object = nullptr;
     }
 
     template<typename T>
-    SharedPtr<T>& SharedPtr<T>::operator=(SharedPtr&& other) noexcept {
-        destroy_this_pointer();
+    SharedRef<T>& SharedRef<T>::operator=(SharedRef&& other) noexcept {
+        destroy_this();
 
         block = other.block;
         object = other.object;
@@ -97,44 +98,44 @@ namespace sm {
     }
 
     template<typename T>
-    T& SharedPtr<T>::operator->() const {
+    T& SharedRef<T>::operator->() const {
         return *object;
     }
 
     template<typename T>
-    T& SharedPtr<T>::operator*() const {
+    T& SharedRef<T>::operator*() const {
         return *object;
     }
 
     template<typename T>
-    SharedPtr<T>::operator bool() const {
+    SharedRef<T>::operator bool() const {
         return object != nullptr;
     }
 
     template<typename T>
-    void SharedPtr<T>::reset() {
-        destroy_this_pointer();
+    void SharedRef<T>::reset() {
+        destroy_this();
 
         object = nullptr;
         block = nullptr;
     }
 
     template<typename T>
-    T* SharedPtr<T>::get() const {
+    T* SharedRef<T>::get() const {
         return object;
     }
 
     template<typename T>
-    size_t SharedPtr<T>::use_count() const {
+    size_t SharedRef<T>::use_count() const {
         return block->ref_count;
     }
 
     template<typename T>
-    SharedPtr<T>::SharedPtr(internal::ControlBlock<T>* block)
+    SharedRef<T>::SharedRef(internal::ControlBlock<T>* block)
         : block(block), object(&block->object.instance) {}
 
     template<typename T>
-    void SharedPtr<T>::destroy_this_pointer() noexcept {
+    void SharedRef<T>::destroy_this() noexcept {
         if (block == nullptr) {
             return;
         }
@@ -148,17 +149,17 @@ namespace sm {
     }
 
     template<typename T, typename... Args>
-    SharedPtr<T> make_shared(Args&&... args) {
+    SharedRef<T> make_shared(Args&&... args) {
         internal::ControlBlock<T>* block = new internal::ControlBlock<T>;
         block->ref_count = 1;
         ::new(&block->object.instance) T(std::forward<Args>(args)...);
 
-        return SharedPtr<T>(block);
+        return SharedRef<T>(block);
     }
 }
 
 template<typename T>
-std::ostream& operator<<(std::ostream& stream, const sm::SharedPtr<T>& pointer) {
+std::ostream& operator<<(std::ostream& stream, const sm::SharedRef<T>& pointer) {
     stream << pointer.get();
 
     return stream;
@@ -166,9 +167,9 @@ std::ostream& operator<<(std::ostream& stream, const sm::SharedPtr<T>& pointer) 
 
 namespace std {
     template<typename T>
-    struct hash<sm::SharedPtr<T>> {
-        size_t operator()(const sm::SharedPtr<T>& pointer) const {
-            return hash<T*> {}(pointer.get());
+    struct hash<sm::SharedRef<T>> {
+        size_t operator()(const sm::SharedRef<T>& pointer) const {
+            return hash<T*>()(pointer.get());
         }
     };
 }

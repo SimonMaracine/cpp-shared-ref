@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace sm {
     namespace internal {
         template<typename T>

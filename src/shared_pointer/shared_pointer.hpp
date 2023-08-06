@@ -1,5 +1,8 @@
 #pragma once
 
-#include "internal/_shared_pointer.hpp"
-#include "internal/weak_pointer.hpp"
-#include "internal/version.hpp"
+// Just a convenience header
+// It's perfectly okay to directly include any of these
+
+#include "parts/shared_ref.hpp"
+#include "parts/weak_ref.hpp"
+#include "parts/version.hpp"

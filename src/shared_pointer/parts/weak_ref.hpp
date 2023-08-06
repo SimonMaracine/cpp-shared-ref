@@ -1,34 +1,36 @@
 #pragma once
 
-#include "control_block.hpp"
+#include <cstddef>
+
+#include "internal/control_block.hpp"
 
 namespace sm {
     template<typename T>
-    class WeakPtr {
+    class WeakRef {
     public:
-        WeakPtr() = default;
-        WeakPtr(SharedPtr<T>& shared_pointer);
-        ~WeakPtr();
+        WeakRef() = default;
+        WeakRef(SharedRef<T>& shared_pointer);
+        ~WeakRef();
 
-        WeakPtr(const WeakPtr& other) noexcept;
-        WeakPtr& operator=(const WeakPtr& other) noexcept;
-        WeakPtr(WeakPtr&& other) noexcept;
-        WeakPtr& operator=(WeakPtr&& other) noexcept;
+        WeakRef(const WeakRef& other) noexcept;
+        WeakRef& operator=(const WeakRef& other) noexcept;
+        WeakRef(WeakRef&& other) noexcept;
+        WeakRef& operator=(WeakRef&& other) noexcept;
 
         void reset();
 
         size_t use_count() const;
         bool expired() const;
-        SharedPtr<T> lock();
+        SharedRef<T> lock();
     private:
-        void destroy_this_pointer() noexcept;
+        void destroy_this() noexcept;
 
         internal::ControlBlock<T>* block = nullptr;
-        SharedPtr<T>* shared_pointer = nullptr;
+        SharedRef<T>* shared_pointer = nullptr;
     };
 
     template<typename T>
-    WeakPtr<T>::WeakPtr(SharedPtr<T>& shared_pointer) {
+    WeakRef<T>::WeakRef(SharedRef<T>& shared_pointer) {
         block = shared_pointer.block;
         this->shared_pointer = &shared_pointer;
 
@@ -36,19 +38,19 @@ namespace sm {
     }
 
     template<typename T>
-    WeakPtr<T>::~WeakPtr() {
-        destroy_this_pointer();
+    WeakRef<T>::~WeakRef() {
+        destroy_this();
     }
 
     template<typename T>
-    WeakPtr<T>::WeakPtr(const WeakPtr& other) noexcept
+    WeakRef<T>::WeakRef(const WeakRef& other) noexcept
         : block(other.block), shared_pointer(other.shared_pointer) {
         block->weak_count++;
     }
 
     template<typename T>
-    WeakPtr<T>& WeakPtr<T>::operator=(const WeakPtr& other) noexcept {
-        destroy_this_pointer();
+    WeakRef<T>& WeakRef<T>::operator=(const WeakRef& other) noexcept {
+        destroy_this();
 
         block = other.block;
         shared_pointer = other.shared_pointer;
@@ -59,15 +61,15 @@ namespace sm {
     }
 
     template<typename T>
-    WeakPtr<T>::WeakPtr(WeakPtr&& other) noexcept
+    WeakRef<T>::WeakRef(WeakRef&& other) noexcept
         : block(other.block), shared_pointer(other.shared_pointer) {
         other.block = nullptr;
         other.shared_pointer = nullptr;
     }
 
     template<typename T>
-    WeakPtr<T>& WeakPtr<T>::operator=(WeakPtr&& other) noexcept {
-        destroy_this_pointer();
+    WeakRef<T>& WeakRef<T>::operator=(WeakRef&& other) noexcept {
+        destroy_this();
 
         block = other.block;
         shared_pointer = other.shared_pointer;
@@ -79,26 +81,26 @@ namespace sm {
     }
 
     template<typename T>
-    void WeakPtr<T>::reset() {
-        destroy_this_pointer();
+    void WeakRef<T>::reset() {
+        destroy_this();
 
         block = nullptr;
         shared_pointer = nullptr;
     }
 
     template<typename T>
-    size_t WeakPtr<T>::use_count() const {
+    size_t WeakRef<T>::use_count() const {
         return block->ref_count;
     }
 
     template<typename T>
-    bool WeakPtr<T>::expired() const {
+    bool WeakRef<T>::expired() const {
         return block->ref_count == 0;
     }
 
     template<typename T>
-    SharedPtr<T> WeakPtr<T>::lock() {
-        SharedPtr<T> strong_pointer;
+    SharedRef<T> WeakRef<T>::lock() {
+        SharedRef<T> strong_pointer;
 
         if (!expired()) {
             strong_pointer.block = block;
@@ -111,7 +113,7 @@ namespace sm {
     }
 
     template<typename T>
-    void WeakPtr<T>::destroy_this_pointer() noexcept {
+    void WeakRef<T>::destroy_this() noexcept {
         if (block == nullptr) {
             return;
         }

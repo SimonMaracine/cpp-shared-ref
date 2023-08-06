@@ -19,28 +19,28 @@ void std_stuff() {
 int main() {
     std_stuff();
 
-    sm::SharedPtr<int> ptr1 = sm::make_shared<int>(20);
+    sm::SharedRef<int> ptr1 = sm::make_shared<int>(20);
 
     PRINT_INFO(ptr1)
 
     {
-        sm::SharedPtr<int> ptr2 = ptr1;
+        sm::SharedRef<int> ptr2 = ptr1;
 
         PRINT_INFO(ptr1)
         PRINT_INFO(ptr2)
 
-        sm::SharedPtr<int> ptr3 = std::move(ptr2);
+        sm::SharedRef<int> ptr3 = std::move(ptr2);
 
         PRINT_INFO(ptr1)
         PRINT_INFO(ptr3)
 
-        sm::WeakPtr<int> weak = ptr3;
+        sm::WeakRef<int> weak = ptr3;
     }
 
     PRINT_INFO(ptr1)
 
     {
-        std::unordered_map<sm::SharedPtr<int>, int> map;
+        std::unordered_map<sm::SharedRef<int>, int> map;
         map[sm::make_shared<int>(19)] = 82763;
     }
 }
