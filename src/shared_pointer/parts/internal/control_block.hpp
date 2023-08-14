@@ -8,11 +8,11 @@ namespace sm {
         struct ControlBlock {
             union {
                 T* pointer;
-                T instance;
+                T value;
             } object;
 
-            size_t ref_count = 0;
-            size_t weak_count = 0;
+            std::size_t ref_count = 0;
+            std::size_t weak_count = 0;
         };
     }
 }

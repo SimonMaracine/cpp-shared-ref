@@ -5,38 +5,112 @@
 #include <cstddef>
 
 #include "internal/control_block.hpp"
-// #include "weak_pointer.hpp"
 
 namespace sm {
-    template <typename T>
+    template<typename T>
+    class WeakRef;
+
+    template<typename T>
     class SharedRef {
     public:
-        SharedRef() = default;
-        explicit SharedRef(T* object);
-        ~SharedRef();
+        SharedRef() noexcept = default;
+
+        explicit SharedRef(T* object_pointer) {
+            block = new internal::ControlBlock<T>;
+            block->ref_count = 1;
+            block->object.pointer = object_pointer;
+
+            this->object_pointer = object_pointer;
+        }
+
+        ~SharedRef() {
+            destroy_this();
+        }
 
         // TODO polymorphism support
 
-        SharedRef(const SharedRef& other) noexcept;
-        SharedRef& operator=(const SharedRef& other) noexcept;
-        SharedRef(SharedRef&& other) noexcept;
-        SharedRef& operator=(SharedRef&& other) noexcept;
+        SharedRef(const SharedRef& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            block->ref_count++;
+        }
 
-        T& operator->() const;
-        T& operator*() const;
+        SharedRef<T>& operator=(const SharedRef& other) {
+            destroy_this();
 
-        operator bool() const;
+            block = other.block;
+            object_pointer = other.object_pointer;
 
-        void reset();
+            block->ref_count++;
 
-        T* get() const;
-        size_t use_count() const;
+            return *this;
+        }
+
+        SharedRef(SharedRef&& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            other.block = nullptr;
+            other.object_pointer = nullptr;
+        }
+
+        SharedRef<T>& operator=(SharedRef&& other) {
+            destroy_this();
+
+            block = other.block;
+            object_pointer = other.object_pointer;
+
+            other.block = nullptr;
+            other.object_pointer = nullptr;
+
+            return *this;
+        }
+
+        T& operator->() const noexcept {
+            return *object_pointer;
+        }
+
+        T& operator*() const noexcept {
+            return *object_pointer;
+        }
+
+        operator bool() const noexcept {
+            return object_pointer != nullptr;
+        }
+
+        // TODO operator==
+        // TODO swap
+
+        void reset() {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
+        }
+
+        T* get() const noexcept {
+            return object_pointer;
+        }
+
+        std::size_t use_count() const noexcept {
+            return block->ref_count;
+        }
     private:
-        SharedRef(internal::ControlBlock<T>* block);
-        void destroy_this() noexcept;
+        SharedRef(internal::ControlBlock<T>* block) noexcept
+            : block(block), object_pointer(&block->object.value) {}
+
+        void destroy_this() {
+            if (block == nullptr) {
+                return;
+            }
+
+            block->ref_count--;
+
+            if (block->ref_count == 0) {
+                delete block;  // TODO should delete control block itself only when there are no weak refs,
+                                // otherwise only delete managed object
+            }
+        }
 
         internal::ControlBlock<T>* block = nullptr;
-        T* object = nullptr;  // Direct access to object
+        T* object_pointer = nullptr;  // Direct access to object; this is always valid or null
 
         template<typename U, typename... Args>
         friend SharedRef<U> make_shared(Args&&... args);
@@ -45,114 +119,11 @@ namespace sm {
         friend class WeakRef;
     };
 
-    template <typename T>
-    SharedRef<T>::SharedRef(T* object) {
-        block = new internal::ControlBlock<T>;
-        block->ref_count = 1;
-        block->object.pointer = object;
-
-        this->object = object;
-    }
-
-    template <typename T>
-    SharedRef<T>::~SharedRef() {
-        destroy_this();
-    }
-
-    template <typename T>
-    SharedRef<T>::SharedRef(const SharedRef& other) noexcept
-        : block(other.block), object(other.object) {
-        block->ref_count++;
-    }
-
-    template<typename T>
-    SharedRef<T>& SharedRef<T>::operator=(const SharedRef& other) noexcept {
-        destroy_this();  // TODO not quite right
-
-        block = other.block;
-        object = other.object;
-
-        block->ref_count++;
-
-        return *this;
-    }
-
-    template<typename T>
-    SharedRef<T>::SharedRef(SharedRef&& other) noexcept
-        : block(other.block), object(other.object) {
-        other.block = nullptr;
-        other.object = nullptr;
-    }
-
-    template<typename T>
-    SharedRef<T>& SharedRef<T>::operator=(SharedRef&& other) noexcept {
-        destroy_this();
-
-        block = other.block;
-        object = other.object;
-
-        other.block = nullptr;
-        other.object = nullptr;
-
-        return *this;
-    }
-
-    template<typename T>
-    T& SharedRef<T>::operator->() const {
-        return *object;
-    }
-
-    template<typename T>
-    T& SharedRef<T>::operator*() const {
-        return *object;
-    }
-
-    template<typename T>
-    SharedRef<T>::operator bool() const {
-        return object != nullptr;
-    }
-
-    template<typename T>
-    void SharedRef<T>::reset() {
-        destroy_this();
-
-        object = nullptr;
-        block = nullptr;
-    }
-
-    template<typename T>
-    T* SharedRef<T>::get() const {
-        return object;
-    }
-
-    template<typename T>
-    size_t SharedRef<T>::use_count() const {
-        return block->ref_count;
-    }
-
-    template<typename T>
-    SharedRef<T>::SharedRef(internal::ControlBlock<T>* block)
-        : block(block), object(&block->object.instance) {}
-
-    template<typename T>
-    void SharedRef<T>::destroy_this() noexcept {
-        if (block == nullptr) {
-            return;
-        }
-
-        block->ref_count--;
-
-        if (block->ref_count == 0) {
-            delete block;  // TODO should delete control block itself only when there are no weak refs,
-                            // otherwise only delete managed object
-        }
-    }
-
     template<typename T, typename... Args>
     SharedRef<T> make_shared(Args&&... args) {
         internal::ControlBlock<T>* block = new internal::ControlBlock<T>;
         block->ref_count = 1;
-        ::new(&block->object.instance) T(std::forward<Args>(args)...);
+        new(&block->object.value) T(std::forward<Args>(args)...);
 
         return SharedRef<T>(block);
     }

@@ -34,7 +34,21 @@ int main() {
         PRINT_INFO(ptr1)
         PRINT_INFO(ptr3)
 
+        sm::SharedRef<int> ptr4 = ptr3;
+
+        PRINT_INFO(ptr1)
+        PRINT_INFO(ptr3)
+        PRINT_INFO(ptr4)
+
+        ptr3 = sm::make_shared<int>(21);
+
+        PRINT_INFO(ptr1)
+        PRINT_INFO(ptr3)
+        PRINT_INFO(ptr4)
+
         sm::WeakRef<int> weak = ptr3;
+
+        PRINT_INFO(ptr3)
     }
 
     PRINT_INFO(ptr1)

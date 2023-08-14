@@ -3,121 +3,94 @@
 #include <cstddef>
 
 #include "internal/control_block.hpp"
+#include "shared_ref.hpp"
 
 namespace sm {
     template<typename T>
     class WeakRef {
     public:
-        WeakRef() = default;
-        WeakRef(SharedRef<T>& shared_pointer);
-        ~WeakRef();
+        WeakRef() noexcept = default;
 
-        WeakRef(const WeakRef& other) noexcept;
-        WeakRef& operator=(const WeakRef& other) noexcept;
-        WeakRef(WeakRef&& other) noexcept;
-        WeakRef& operator=(WeakRef&& other) noexcept;
+        WeakRef(SharedRef<T>& shared_pointer) noexcept
+            : block(shared_pointer.block), object_pointer(shared_pointer.object_pointer) {
+            block->weak_count++;
+        }
 
-        void reset();
+        ~WeakRef() noexcept {
+            destroy_this();
+        }
 
-        size_t use_count() const;
-        bool expired() const;
-        SharedRef<T> lock();
+        WeakRef(const WeakRef& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            block->weak_count++;
+        }
+
+        WeakRef<T>& operator=(const WeakRef& other) noexcept {
+            destroy_this();
+
+            block = other.block;
+            object_pointer = other.object_pointer;
+
+            block->weak_count++;
+
+            return *this;
+        }
+
+        WeakRef(WeakRef&& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            other.block = nullptr;
+            other.object_pointer = nullptr;
+        }
+
+        WeakRef<T>& operator=(WeakRef&& other) noexcept {
+            destroy_this();
+
+            block = other.block;
+            object_pointer = other.object_pointer;
+
+            other.block = nullptr;
+            other.object_pointer = nullptr;
+
+            return *this;
+        }
+
+        void reset() noexcept {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
+        }
+
+        std::size_t use_count() const noexcept {
+            return block->ref_count;
+        }
+
+        bool expired() const noexcept {
+            return block->ref_count == 0;
+        }
+
+        SharedRef<T> lock() {
+            SharedRef<T> strong_pointer;
+
+            if (!expired()) {
+                strong_pointer.block = block;
+                strong_pointer.object_pointer = object_pointer;
+
+                block->ref_count++;
+            }
+
+            return strong_pointer;
+        }
     private:
-        void destroy_this() noexcept;
+        void destroy_this() noexcept {
+            if (block == nullptr) {
+                return;
+            }
+
+            block->weak_count--;
+        }
 
         internal::ControlBlock<T>* block = nullptr;
-        SharedRef<T>* shared_pointer = nullptr;
+        T* object_pointer = nullptr;  // This is always valid or null
     };
-
-    template<typename T>
-    WeakRef<T>::WeakRef(SharedRef<T>& shared_pointer) {
-        block = shared_pointer.block;
-        this->shared_pointer = &shared_pointer;
-
-        block->weak_count++;
-    }
-
-    template<typename T>
-    WeakRef<T>::~WeakRef() {
-        destroy_this();
-    }
-
-    template<typename T>
-    WeakRef<T>::WeakRef(const WeakRef& other) noexcept
-        : block(other.block), shared_pointer(other.shared_pointer) {
-        block->weak_count++;
-    }
-
-    template<typename T>
-    WeakRef<T>& WeakRef<T>::operator=(const WeakRef& other) noexcept {
-        destroy_this();
-
-        block = other.block;
-        shared_pointer = other.shared_pointer;
-
-        block->weak_count++;
-
-        return *this;
-    }
-
-    template<typename T>
-    WeakRef<T>::WeakRef(WeakRef&& other) noexcept
-        : block(other.block), shared_pointer(other.shared_pointer) {
-        other.block = nullptr;
-        other.shared_pointer = nullptr;
-    }
-
-    template<typename T>
-    WeakRef<T>& WeakRef<T>::operator=(WeakRef&& other) noexcept {
-        destroy_this();
-
-        block = other.block;
-        shared_pointer = other.shared_pointer;
-
-        other.block = nullptr;
-        other.shared_pointer = nullptr;
-
-        return *this;
-    }
-
-    template<typename T>
-    void WeakRef<T>::reset() {
-        destroy_this();
-
-        block = nullptr;
-        shared_pointer = nullptr;
-    }
-
-    template<typename T>
-    size_t WeakRef<T>::use_count() const {
-        return block->ref_count;
-    }
-
-    template<typename T>
-    bool WeakRef<T>::expired() const {
-        return block->ref_count == 0;
-    }
-
-    template<typename T>
-    SharedRef<T> WeakRef<T>::lock() {
-        SharedRef<T> strong_pointer;
-
-        if (!expired()) {
-            strong_pointer.block = block;
-            strong_pointer.object = block->object.pointer;  // FIXME wrong
-
-            block->ref_count++;
-        }
-
-        return strong_pointer;
-    }
-
-    template<typename T>
-    void WeakRef<T>::destroy_this() noexcept {
-        if (block == nullptr) {
-            return;
-        }
-
-        block->weak_count--;
-    }
 }
