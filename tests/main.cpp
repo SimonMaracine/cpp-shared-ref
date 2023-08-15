@@ -1,9 +1,41 @@
 #include <string>
 #include <cstring>
 #include <utility>
+#include <vector>
+#include <unordered_map>
+#include <memory>
 
 #include <shared_pointer/shared_pointer.hpp>
 #include <gtest/gtest.h>
+
+struct Base {
+    Base(bool* base_c, bool* base_d)
+        : base_c(base_c), base_d(base_d) {
+
+        *base_c = !*base_c;
+    }
+
+    virtual ~Base() {
+        *base_d = !*base_d;
+    }
+
+    bool* base_c = nullptr;
+    bool* base_d = nullptr;
+};
+
+struct Derived : Base {
+    Derived(bool* base_c, bool* base_d, bool* derived_c, bool* derived_d)
+        : Base(base_c, base_d), derived_c(derived_c), derived_d(derived_d)  {
+        *derived_c = !*derived_c;
+    }
+
+    virtual ~Derived() {
+        *derived_d = !*derived_d;
+    }
+
+    bool* derived_c = nullptr;
+    bool* derived_d = nullptr;
+};
 
 TEST(SharedRefTest, Declaration) {
     sm::SharedRef<int> ptr;
@@ -32,15 +64,6 @@ TEST(SharedRefTest, AllocationInt) {
         ASSERT_NE(ptr.get(), nullptr);
         ASSERT_EQ(*ptr, 21);
     }
-
-    {
-        sm::SharedRef<int> ptr {new int(21)};
-
-        ASSERT_TRUE(ptr);
-        ASSERT_EQ(ptr.use_count(), 1);
-        ASSERT_NE(ptr.get(), nullptr);
-        ASSERT_EQ(*ptr, 21);
-    }
 }
 
 TEST(SharedRefTest, AllocationString) {
@@ -48,16 +71,6 @@ TEST(SharedRefTest, AllocationString) {
 
     {
         sm::SharedRef<std::string> ptr = sm::make_shared<std::string>(STRING);
-
-        ASSERT_TRUE(ptr);
-        ASSERT_EQ(ptr.use_count(), 1);
-        ASSERT_NE(ptr.get(), nullptr);
-        ASSERT_EQ(*ptr, std::string(STRING));
-        ASSERT_EQ(ptr->size(), std::strlen(STRING));
-    }
-
-    {
-        sm::SharedRef<std::string> ptr {new std::string(STRING)};
 
         ASSERT_TRUE(ptr);
         ASSERT_EQ(ptr.use_count(), 1);
@@ -199,56 +212,106 @@ TEST(SharedRefTest, IncDecRefMoveInt) {
     ASSERT_EQ(*ptr, 22);
 }
 
-// void std_stuff() {
-//     std::shared_ptr<int> ptr = std::make_shared<int>(21);
+TEST(SharedRefTest, InsideVector) {
+    {
+        bool base_c = false;
+        bool base_d = false;
 
-//     std::weak_ptr<int> weak = ptr;
+        std::vector<sm::SharedRef<Base>> vec;
 
-//     std::cout << ptr.use_count() << std::endl;
-// }
+        vec.push_back(sm::make_shared<Base>(&base_c, &base_d));
 
-// #define PRINT_INFO(pointer)
-//     std::cout << #pointer ": ref - " << pointer.use_count() << ", data - " << *pointer << std::endl;
+        ASSERT_TRUE(base_c);
 
-// int main() {
-//     std_stuff();
+        vec.pop_back();
 
-//     sm::SharedRef<int> ptr1 = sm::make_shared<int>(20);
+        ASSERT_TRUE(base_d);
+    }
 
-//     PRINT_INFO(ptr1)
+    {
+        std::vector<sm::SharedRef<std::string>> vec;
 
-//     {
-//         sm::SharedRef<int> ptr2 = ptr1;
+        vec.push_back(sm::make_shared<std::string>("Hello"));
+        vec.push_back(sm::make_shared<std::string>(","));
+        vec.push_back(sm::make_shared<std::string>("world"));
+        vec.push_back(sm::make_shared<std::string>("!"));
+        vec.push_back(sm::make_shared<std::string>("What's"));
+        vec.push_back(sm::make_shared<std::string>("up"));
+        vec.push_back(sm::make_shared<std::string>("?"));
 
-//         PRINT_INFO(ptr1)
-//         PRINT_INFO(ptr2)
+        vec.clear();
+    }
+}
 
-//         sm::SharedRef<int> ptr3 = std::move(ptr2);
+TEST(SharedRefTest, InsideUnorderedMap) {
+    {
+        bool base_c = false;
+        bool base_d = false;
 
-//         PRINT_INFO(ptr1)
-//         PRINT_INFO(ptr3)
+        std::unordered_map<sm::SharedRef<Base>, int> map;
 
-//         sm::SharedRef<int> ptr4 = ptr3;
+        auto ptr = sm::make_shared<Base>(&base_c, &base_d);
+        map[ptr] = 1;
 
-//         PRINT_INFO(ptr1)
-//         PRINT_INFO(ptr3)
-//         PRINT_INFO(ptr4)
+        ASSERT_TRUE(base_c);
 
-//         ptr3 = sm::make_shared<int>(21);
+        map.erase(ptr);
+        ptr.reset();
 
-//         PRINT_INFO(ptr1)
-//         PRINT_INFO(ptr3)
-//         PRINT_INFO(ptr4)
+        ASSERT_TRUE(base_d);
+    }
 
-//         sm::WeakRef<int> weak = ptr3;
+    {
+        std::unordered_map<sm::SharedRef<std::string>, int> map;
 
-//         PRINT_INFO(ptr3)
-//     }
+        map[sm::make_shared<std::string>("Hello")] = 19;
+        map[sm::make_shared<std::string>(",")] = 21;
+        map[sm::make_shared<std::string>("world")] = 23;
+        map[sm::make_shared<std::string>("!")] = 25;
+        map[sm::make_shared<std::string>("What's")] = 27;
+        map[sm::make_shared<std::string>("up")] = 29;
+        map[sm::make_shared<std::string>("?")] = 31;
 
-//     PRINT_INFO(ptr1)
+        map.clear();
+    }
+}
 
-//     {
-//         std::unordered_map<sm::SharedRef<int>, int> map;
-//         map[sm::make_shared<int>(19)] = 82763;
-//     }
-// }
+TEST(SharedRefTest, Polymorhism) {
+    {
+        bool base_c = false;
+        bool base_d = false;
+        bool derived_c = false;
+        bool derived_d = false;
+
+        sm::SharedRef<Derived> ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
+        // Derived* ptr = new Derived(&base_c, &base_d, &derived_c, &derived_d);
+
+        ASSERT_TRUE(base_c);
+        ASSERT_TRUE(derived_c);
+
+        ptr.reset();
+        // delete ptr;
+
+        ASSERT_TRUE(base_d);
+        ASSERT_TRUE(derived_d);
+    }
+
+    {
+        bool base_c = false;
+        bool base_d = false;
+        bool derived_c = false;
+        bool derived_d = false;
+
+        sm::SharedRef<Base> ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
+        // Base* ptr = new Derived(&base_c, &base_d, &derived_c, &derived_d);
+
+        ASSERT_TRUE(base_c);
+        ASSERT_TRUE(derived_c);
+
+        ptr.reset();
+        // delete ptr;
+
+        ASSERT_TRUE(base_d);
+        ASSERT_TRUE(derived_d);
+    }
+}

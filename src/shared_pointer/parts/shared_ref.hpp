@@ -14,16 +14,7 @@ namespace sm {
     class SharedRef {
     public:
         SharedRef() noexcept = default;
-
         SharedRef(std::nullptr_t) noexcept {}
-
-        explicit SharedRef(T* object_pointer) {
-            block = new internal::ControlBlock<T>;
-            block->ref_count = 1;
-            block->object.pointer = object_pointer;
-
-            this->object_pointer = object_pointer;
-        }
 
         ~SharedRef() {
             destroy_this();
@@ -32,6 +23,14 @@ namespace sm {
         // TODO polymorphism support
 
         SharedRef(const SharedRef& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            if (block != nullptr) {
+                block->ref_count++;
+            }
+        }
+
+        template<typename U>
+        SharedRef(const SharedRef<U>& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
             if (block != nullptr) {
                 block->ref_count++;
@@ -113,7 +112,7 @@ namespace sm {
         }
     private:
         explicit SharedRef(internal::ControlBlock<T>* block) noexcept
-            : block(block), object_pointer(&block->object.value) {}
+            : block(block), object_pointer(&block->object_value) {}
 
         void destroy_this() {
             if (block == nullptr) {
@@ -136,21 +135,24 @@ namespace sm {
 
         template<typename U>
         friend class WeakRef;
+
+        // Befriend ourselves
+        template<typename U>
+        friend class SharedRef;
     };
 
     template<typename T, typename... Args>
     SharedRef<T> make_shared(Args&&... args) {
-        internal::ControlBlock<T>* block = new internal::ControlBlock<T>;
+        internal::ControlBlock<T>* block = new internal::ControlBlock<T>(std::forward<Args>(args)...);
         block->ref_count = 1;
-        new(&block->object.value) T(std::forward<Args>(args)...);
 
         return SharedRef<T>(block);
     }
 }
 
 template<typename T>
-std::ostream& operator<<(std::ostream& stream, const sm::SharedRef<T>& pointer) {
-    stream << pointer.get();
+std::ostream& operator<<(std::ostream& stream, const sm::SharedRef<T>& shared_ref) {
+    stream << shared_ref.get();
 
     return stream;
 }
@@ -158,8 +160,8 @@ std::ostream& operator<<(std::ostream& stream, const sm::SharedRef<T>& pointer) 
 namespace std {
     template<typename T>
     struct hash<sm::SharedRef<T>> {
-        size_t operator()(const sm::SharedRef<T>& pointer) const {
-            return hash<T*>()(pointer.get());
+        size_t operator()(const sm::SharedRef<T>& shared_ref) const {
+            return hash<T*>()(shared_ref.get());
         }
     };
 }
