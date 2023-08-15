@@ -1,7 +1,7 @@
 #pragma once
 
-#include <utility>
 #include <cstddef>
+#include <utility>
 #include <ostream>
 
 #include "internal/control_block.hpp"
@@ -30,15 +30,6 @@ namespace sm {
         }
 
         // TODO polymorphism support
-
-        SharedRef& operator=(std::nullptr_t) {
-            destroy_this();
-
-            block = nullptr;
-            object_pointer = nullptr;
-
-            return *this;
-        }
 
         SharedRef(const SharedRef& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
@@ -74,6 +65,15 @@ namespace sm {
 
             other.block = nullptr;
             other.object_pointer = nullptr;
+
+            return *this;
+        }
+
+        SharedRef& operator=(std::nullptr_t) {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
 
             return *this;
         }

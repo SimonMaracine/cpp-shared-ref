@@ -11,9 +11,13 @@ namespace sm {
     public:
         WeakRef() noexcept = default;
 
+        WeakRef(std::nullptr_t) noexcept {}
+
         WeakRef(SharedRef<T>& shared_pointer) noexcept
             : block(shared_pointer.block), object_pointer(shared_pointer.object_pointer) {
-            block->weak_count++;
+            if (block != nullptr) {
+                block->weak_count++;
+            }
         }
 
         ~WeakRef() noexcept {
@@ -22,7 +26,9 @@ namespace sm {
 
         WeakRef(const WeakRef& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
-            block->weak_count++;
+            if (block != nullptr) {
+                block->weak_count++;
+            }
         }
 
         WeakRef<T>& operator=(const WeakRef& other) noexcept {
@@ -31,7 +37,9 @@ namespace sm {
             block = other.block;
             object_pointer = other.object_pointer;
 
-            block->weak_count++;
+            if (block != nullptr) {
+                block->weak_count++;
+            }
 
             return *this;
         }
@@ -54,6 +62,15 @@ namespace sm {
             return *this;
         }
 
+        WeakRef& operator=(std::nullptr_t) {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
+
+            return *this;
+        }
+
         void reset() noexcept {
             destroy_this();
 
@@ -62,24 +79,32 @@ namespace sm {
         }
 
         std::size_t use_count() const noexcept {
+            if (block == nullptr) {
+                return 0;
+            }
+
             return block->ref_count;
         }
 
         bool expired() const noexcept {
+            if (block == nullptr) {
+                return true;
+            }
+
             return block->ref_count == 0;
         }
 
         SharedRef<T> lock() {
-            SharedRef<T> strong_pointer;
+            SharedRef<T> strong_ref;
 
             if (!expired()) {
-                strong_pointer.block = block;
-                strong_pointer.object_pointer = object_pointer;
+                strong_ref.block = block;
+                strong_ref.object_pointer = object_pointer;
 
                 block->ref_count++;
             }
 
-            return strong_pointer;
+            return strong_ref;
         }
     private:
         void destroy_this() noexcept {
