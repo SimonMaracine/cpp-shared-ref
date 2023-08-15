@@ -91,6 +91,6 @@ namespace sm {
         }
 
         internal::ControlBlock<T>* block = nullptr;
-        T* object_pointer = nullptr;  // This is always valid or null
+        T* object_pointer = nullptr;  // This is always null or something
     };
 }

@@ -6,7 +6,7 @@ namespace sm {
     namespace internal {
         template<typename T>
         struct ControlBlock {
-            union {
+            struct Object {  // FIXME use union
                 T* pointer;
                 T value;
             } object;

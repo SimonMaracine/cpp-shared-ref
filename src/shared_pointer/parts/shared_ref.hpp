@@ -1,8 +1,8 @@
 #pragma once
 
-#include <ostream>
 #include <utility>
 #include <cstddef>
+#include <ostream>
 
 #include "internal/control_block.hpp"
 
@@ -14,6 +14,8 @@ namespace sm {
     class SharedRef {
     public:
         SharedRef() noexcept = default;
+
+        SharedRef(std::nullptr_t) noexcept {}
 
         explicit SharedRef(T* object_pointer) {
             block = new internal::ControlBlock<T>;
@@ -29,18 +31,31 @@ namespace sm {
 
         // TODO polymorphism support
 
-        SharedRef(const SharedRef& other) noexcept
-            : block(other.block), object_pointer(other.object_pointer) {
-            block->ref_count++;
+        SharedRef& operator=(std::nullptr_t) {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
+
+            return *this;
         }
 
-        SharedRef<T>& operator=(const SharedRef& other) {
+        SharedRef(const SharedRef& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            if (block != nullptr) {
+                block->ref_count++;
+            }
+        }
+
+        SharedRef& operator=(const SharedRef& other) {
             destroy_this();
 
             block = other.block;
             object_pointer = other.object_pointer;
 
-            block->ref_count++;
+            if (block != nullptr) {
+                block->ref_count++;
+            }
 
             return *this;
         }
@@ -51,7 +66,7 @@ namespace sm {
             other.object_pointer = nullptr;
         }
 
-        SharedRef<T>& operator=(SharedRef&& other) {
+        SharedRef& operator=(SharedRef&& other) {
             destroy_this();
 
             block = other.block;
@@ -63,8 +78,8 @@ namespace sm {
             return *this;
         }
 
-        T& operator->() const noexcept {
-            return *object_pointer;
+        T* operator->() const noexcept {
+            return object_pointer;
         }
 
         T& operator*() const noexcept {
@@ -90,10 +105,14 @@ namespace sm {
         }
 
         std::size_t use_count() const noexcept {
+            if (block == nullptr) {
+                return 0;
+            }
+
             return block->ref_count;
         }
     private:
-        SharedRef(internal::ControlBlock<T>* block) noexcept
+        explicit SharedRef(internal::ControlBlock<T>* block) noexcept
             : block(block), object_pointer(&block->object.value) {}
 
         void destroy_this() {
@@ -110,7 +129,7 @@ namespace sm {
         }
 
         internal::ControlBlock<T>* block = nullptr;
-        T* object_pointer = nullptr;  // Direct access to object; this is always valid or null
+        T* object_pointer = nullptr;  // Direct access to object; this is always null or something
 
         template<typename U, typename... Args>
         friend SharedRef<U> make_shared(Args&&... args);
