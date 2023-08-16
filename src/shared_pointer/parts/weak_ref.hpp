@@ -115,7 +115,7 @@ namespace sm {
             block->weak_count--;
         }
 
-        internal::ControlBlock<T>* block = nullptr;
+        internal::ControlBlock* block = nullptr;
         T* object_pointer = nullptr;  // This is always null or something
     };
 }

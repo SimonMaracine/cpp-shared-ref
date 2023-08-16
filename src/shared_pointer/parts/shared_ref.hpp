@@ -16,17 +16,13 @@ namespace sm {
         SharedRef() noexcept = default;
         SharedRef(std::nullptr_t) noexcept {}
 
-        ~SharedRef() {
-            destroy_this();
+        SharedRef(T* object_pointer)
+            : object_pointer(object_pointer) {
+            block = new internal::ControlBlock;
         }
 
-        // TODO polymorphism support
-
-        SharedRef(const SharedRef& other) noexcept
-            : block(other.block), object_pointer(other.object_pointer) {
-            if (block != nullptr) {
-                tblock()->ref_count++;
-            }
+        ~SharedRef() {
+            destroy_this();
         }
 
         template<typename U>
@@ -34,43 +30,22 @@ namespace sm {
             : block(other.block), object_pointer(other.object_pointer) {
 
             if (block != nullptr) {
-                tblock()->ref_count++;
+                block->ref_count++;
             }
-        }
-
-        SharedRef& operator=(const SharedRef& other) {
-            destroy_this();
-
-            block = other.block;
-            object_pointer = other.object_pointer;
-
-            if (block != nullptr) {
-                tblock()->ref_count++;
-            }
-
-            return *this;
         }
 
         template<typename U>
         SharedRef& operator=(const SharedRef<U>& other) {
-            static_assert(alignof(U) == alignof(T));
-
             destroy_this();
 
             block = other.block;
             object_pointer = other.object_pointer;
 
             if (block != nullptr) {
-                tblock()->ref_count++;
+                block->ref_count++;
             }
 
             return *this;
-        }
-
-        SharedRef(SharedRef&& other) noexcept
-            : block(other.block), object_pointer(other.object_pointer) {
-            other.block = nullptr;
-            other.object_pointer = nullptr;
         }
 
         template<typename U>
@@ -80,7 +55,8 @@ namespace sm {
             other.object_pointer = nullptr;
         }
 
-        SharedRef& operator=(SharedRef&& other) {
+        template<typename U>
+        SharedRef& operator=(SharedRef<U>&& other) {
             destroy_this();
 
             block = other.block;
@@ -132,32 +108,34 @@ namespace sm {
                 return 0;
             }
 
-            return tblock()->ref_count;
+            return block->ref_count;
         }
     private:
-        explicit SharedRef(internal::ControlBlock<T>* block) noexcept
-            : block(block), object_pointer(&block->object_value) {}
+        template<typename... Args>
+        explicit SharedRef(Args&&... args) {
+            block = new internal::ControlBlock;
+            object_pointer = new T(std::forward<Args>(args)...);
+        }
 
         void destroy_this() {
             if (block == nullptr) {
                 return;
             }
 
-            tblock()->ref_count--;
+            block->ref_count--;
 
-            if (tblock()->ref_count == 0) {
-                delete tblock();  // TODO should delete control block itself only when there are no weak refs,
-                                // otherwise only delete managed object
+            if (block->ref_count == 0) {
+                delete object_pointer;
+                object_pointer = nullptr;
+
+                if (block->weak_count == 0) {
+                    delete block;
+                }
             }
         }
 
-        internal::ControlBlock<T>* tblock() const noexcept {
-            auto casted = static_cast<internal::ControlBlock<T>*>(block);
-            return casted;
-        }
-
-        void* block = nullptr;
-        T* object_pointer = nullptr;  // Direct access to object; this is always null or something
+        internal::ControlBlock* block = nullptr;
+        T* object_pointer = nullptr;
 
         template<typename U, typename... Args>
         friend SharedRef<U> make_shared(Args&&... args);
@@ -172,9 +150,7 @@ namespace sm {
 
     template<typename T, typename... Args>
     SharedRef<T> make_shared(Args&&... args) {
-        internal::ControlBlock<T>* block = new internal::ControlBlock<T>(std::forward<Args>(args)...);
-
-        return SharedRef<T>(block);
+        return SharedRef<T>(std::forward<Args>(args)...);
     }
 }
 

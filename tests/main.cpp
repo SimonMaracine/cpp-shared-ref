@@ -322,6 +322,7 @@ TEST(SharedRefTest, Polymorhism) {
         ASSERT_TRUE(derived_d);
     }
 
+    // Copy assignment
     {
         bool base_c = false;
         bool base_d = false;
@@ -336,13 +337,22 @@ TEST(SharedRefTest, Polymorhism) {
 
         ASSERT_TRUE(base_c);
         ASSERT_TRUE(derived_c);
+        ASSERT_EQ(derived_ptr.use_count(), 2);
+        ASSERT_EQ(ptr.use_count(), 2);
 
         ptr.reset();
+
+        ASSERT_FALSE(base_d);
+        ASSERT_FALSE(derived_d);
+        ASSERT_EQ(derived_ptr.use_count(), 1);
+
+        derived_ptr.reset();
 
         ASSERT_TRUE(base_d);
         ASSERT_TRUE(derived_d);
     }
 
+    // Move constructor
     {
         bool base_c = false;
         bool base_d = false;
@@ -351,6 +361,28 @@ TEST(SharedRefTest, Polymorhism) {
 
         auto derived_ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
         sm::SharedRef<Base> ptr = std::move(derived_ptr);
+
+        ASSERT_TRUE(base_c);
+        ASSERT_TRUE(derived_c);
+        ASSERT_EQ(ptr.use_count(), 1);
+
+        ptr.reset();
+
+        ASSERT_TRUE(base_d);
+        ASSERT_TRUE(derived_d);
+    }
+
+    // Move assignment
+    {
+        bool base_c = false;
+        bool base_d = false;
+        bool derived_c = false;
+        bool derived_d = false;
+
+        auto derived_ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
+        sm::SharedRef<Base> ptr;
+        [[maybe_unused]] volatile auto want_move_assignment = ptr.use_count();
+        ptr = std::move(derived_ptr);
 
         ASSERT_TRUE(base_c);
         ASSERT_TRUE(derived_c);
