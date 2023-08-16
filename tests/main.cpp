@@ -284,13 +284,39 @@ TEST(SharedRefTest, Polymorhism) {
         bool derived_d = false;
 
         sm::SharedRef<Derived> ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
-        // Derived* ptr = new Derived(&base_c, &base_d, &derived_c, &derived_d);
 
         ASSERT_TRUE(base_c);
         ASSERT_TRUE(derived_c);
 
         ptr.reset();
-        // delete ptr;
+
+        ASSERT_TRUE(base_d);
+        ASSERT_TRUE(derived_d);
+    }
+
+    // Copy constructor
+    {
+        bool base_c = false;
+        bool base_d = false;
+        bool derived_c = false;
+        bool derived_d = false;
+
+        auto derived_ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
+        sm::SharedRef<Base> ptr = derived_ptr;
+        [[maybe_unused]] volatile auto want_copy_constructor = derived_ptr.use_count();
+
+        ASSERT_TRUE(base_c);
+        ASSERT_TRUE(derived_c);
+        ASSERT_EQ(derived_ptr.use_count(), 2);
+        ASSERT_EQ(ptr.use_count(), 2);
+
+        ptr.reset();
+
+        ASSERT_FALSE(base_d);
+        ASSERT_FALSE(derived_d);
+        ASSERT_EQ(derived_ptr.use_count(), 1);
+
+        derived_ptr.reset();
 
         ASSERT_TRUE(base_d);
         ASSERT_TRUE(derived_d);
@@ -302,14 +328,35 @@ TEST(SharedRefTest, Polymorhism) {
         bool derived_c = false;
         bool derived_d = false;
 
-        sm::SharedRef<Base> ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
-        // Base* ptr = new Derived(&base_c, &base_d, &derived_c, &derived_d);
+        auto derived_ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
+        sm::SharedRef<Base> ptr;
+        [[maybe_unused]] volatile auto want_copy_assignment = ptr.use_count();
+        ptr = derived_ptr;
+        [[maybe_unused]] volatile auto want_copy_assignment2 = derived_ptr.use_count();
 
         ASSERT_TRUE(base_c);
         ASSERT_TRUE(derived_c);
 
         ptr.reset();
-        // delete ptr;
+
+        ASSERT_TRUE(base_d);
+        ASSERT_TRUE(derived_d);
+    }
+
+    {
+        bool base_c = false;
+        bool base_d = false;
+        bool derived_c = false;
+        bool derived_d = false;
+
+        auto derived_ptr = sm::make_shared<Derived>(&base_c, &base_d, &derived_c, &derived_d);
+        sm::SharedRef<Base> ptr = std::move(derived_ptr);
+
+        ASSERT_TRUE(base_c);
+        ASSERT_TRUE(derived_c);
+        ASSERT_EQ(ptr.use_count(), 1);
+
+        ptr.reset();
 
         ASSERT_TRUE(base_d);
         ASSERT_TRUE(derived_d);

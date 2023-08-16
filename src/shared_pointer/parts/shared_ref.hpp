@@ -25,15 +25,16 @@ namespace sm {
         SharedRef(const SharedRef& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
             if (block != nullptr) {
-                block->ref_count++;
+                tblock()->ref_count++;
             }
         }
 
         template<typename U>
         SharedRef(const SharedRef<U>& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
+
             if (block != nullptr) {
-                block->ref_count++;
+                tblock()->ref_count++;
             }
         }
 
@@ -44,13 +45,36 @@ namespace sm {
             object_pointer = other.object_pointer;
 
             if (block != nullptr) {
-                block->ref_count++;
+                tblock()->ref_count++;
+            }
+
+            return *this;
+        }
+
+        template<typename U>
+        SharedRef& operator=(const SharedRef<U>& other) {
+            static_assert(alignof(U) == alignof(T));
+
+            destroy_this();
+
+            block = other.block;
+            object_pointer = other.object_pointer;
+
+            if (block != nullptr) {
+                tblock()->ref_count++;
             }
 
             return *this;
         }
 
         SharedRef(SharedRef&& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            other.block = nullptr;
+            other.object_pointer = nullptr;
+        }
+
+        template<typename U>
+        SharedRef(SharedRef<U>&& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
             other.block = nullptr;
             other.object_pointer = nullptr;
@@ -108,7 +132,7 @@ namespace sm {
                 return 0;
             }
 
-            return block->ref_count;
+            return tblock()->ref_count;
         }
     private:
         explicit SharedRef(internal::ControlBlock<T>* block) noexcept
@@ -119,15 +143,20 @@ namespace sm {
                 return;
             }
 
-            block->ref_count--;
+            tblock()->ref_count--;
 
-            if (block->ref_count == 0) {
-                delete block;  // TODO should delete control block itself only when there are no weak refs,
+            if (tblock()->ref_count == 0) {
+                delete tblock();  // TODO should delete control block itself only when there are no weak refs,
                                 // otherwise only delete managed object
             }
         }
 
-        internal::ControlBlock<T>* block = nullptr;
+        internal::ControlBlock<T>* tblock() const noexcept {
+            auto casted = static_cast<internal::ControlBlock<T>*>(block);
+            return casted;
+        }
+
+        void* block = nullptr;
         T* object_pointer = nullptr;  // Direct access to object; this is always null or something
 
         template<typename U, typename... Args>
@@ -144,7 +173,6 @@ namespace sm {
     template<typename T, typename... Args>
     SharedRef<T> make_shared(Args&&... args) {
         internal::ControlBlock<T>* block = new internal::ControlBlock<T>(std::forward<Args>(args)...);
-        block->ref_count = 1;
 
         return SharedRef<T>(block);
     }

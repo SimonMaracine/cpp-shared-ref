@@ -9,7 +9,7 @@ namespace sm {
         struct ControlBlock {
             template<typename... Args>
             ControlBlock(Args&&... args)
-                : object.value(std::forward<Args>(args)...) {}
+                : object_value(std::forward<Args>(args)...) {}
 
             ~ControlBlock() = default;
 
@@ -18,12 +18,8 @@ namespace sm {
             ControlBlock(ControlBlock&&) = default;
             ControlBlock& operator=(ControlBlock&&) = default;
 
-            union {
-                T value;
-                T* pointer;
-            } object;
-
-            std::size_t ref_count = 0;
+            T object_value;
+            std::size_t ref_count = 1;
             std::size_t weak_count = 0;
         };
     }
