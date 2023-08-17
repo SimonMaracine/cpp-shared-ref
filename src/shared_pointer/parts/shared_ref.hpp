@@ -25,6 +25,14 @@ namespace sm {
             destroy_this();
         }
 
+        SharedRef(const SharedRef& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+
+            if (block != nullptr) {
+                block->ref_count++;
+            }
+        }
+
         template<typename U>
         SharedRef(const SharedRef<U>& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
@@ -32,6 +40,19 @@ namespace sm {
             if (block != nullptr) {
                 block->ref_count++;
             }
+        }
+
+        SharedRef& operator=(const SharedRef& other) {
+            destroy_this();
+
+            block = other.block;
+            object_pointer = other.object_pointer;
+
+            if (block != nullptr) {
+                block->ref_count++;
+            }
+
+            return *this;
         }
 
         template<typename U>
@@ -48,11 +69,29 @@ namespace sm {
             return *this;
         }
 
+        SharedRef(SharedRef&& other) noexcept
+            : block(other.block), object_pointer(other.object_pointer) {
+            other.block = nullptr;
+            other.object_pointer = nullptr;
+        }
+
         template<typename U>
         SharedRef(SharedRef<U>&& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
             other.block = nullptr;
             other.object_pointer = nullptr;
+        }
+
+        SharedRef& operator=(SharedRef&& other) {
+            destroy_this();
+
+            block = other.block;
+            object_pointer = other.object_pointer;
+
+            other.block = nullptr;
+            other.object_pointer = nullptr;
+
+            return *this;
         }
 
         template<typename U>
