@@ -33,30 +33,7 @@ namespace sm {
             }
         }
 
-        template<typename U>
-        SharedRef(const SharedRef<U>& other) noexcept
-            : block(other.block), object_pointer(other.object_pointer) {
-
-            if (block != nullptr) {
-                block->ref_count++;
-            }
-        }
-
         SharedRef& operator=(const SharedRef& other) {
-            destroy_this();
-
-            block = other.block;
-            object_pointer = other.object_pointer;
-
-            if (block != nullptr) {
-                block->ref_count++;
-            }
-
-            return *this;
-        }
-
-        template<typename U>
-        SharedRef& operator=(const SharedRef<U>& other) {
             destroy_this();
 
             block = other.block;
@@ -75,27 +52,7 @@ namespace sm {
             other.object_pointer = nullptr;
         }
 
-        template<typename U>
-        SharedRef(SharedRef<U>&& other) noexcept
-            : block(other.block), object_pointer(other.object_pointer) {
-            other.block = nullptr;
-            other.object_pointer = nullptr;
-        }
-
         SharedRef& operator=(SharedRef&& other) {
-            destroy_this();
-
-            block = other.block;
-            object_pointer = other.object_pointer;
-
-            other.block = nullptr;
-            other.object_pointer = nullptr;
-
-            return *this;
-        }
-
-        template<typename U>
-        SharedRef& operator=(SharedRef<U>&& other) {
             destroy_this();
 
             block = other.block;
@@ -144,52 +101,45 @@ namespace sm {
 
         std::size_t use_count() const noexcept {
             if (block == nullptr) {
-                return 0;
+                return 0u;
             }
 
             return block->ref_count;
         }
     private:
-        template<typename... Args>
-        explicit SharedRef(Args&&... args) {
-            block = new internal::ControlBlock;
-            object_pointer = new T(std::forward<Args>(args)...);
-        }
-
         void destroy_this() {
             if (block == nullptr) {
                 return;
             }
 
-            block->ref_count--;
-
-            if (block->ref_count == 0) {
+            if (--block->ref_count == 0u) {
                 delete object_pointer;
                 object_pointer = nullptr;
 
-                if (block->weak_count == 0) {
+                if (block->weak_count == 0u) {
                     delete block;
                 }
             }
         }
 
-        internal::ControlBlock* block = nullptr;
-        T* object_pointer = nullptr;
+        internal::ControlBlock* block {nullptr};
+        T* object_pointer {nullptr};
 
         template<typename U, typename... Args>
         friend SharedRef<U> make_shared(Args&&... args);
 
         template<typename U>
         friend class WeakRef;
-
-        // Befriend ourselves
-        template<typename U>
-        friend class SharedRef;
     };
 
     template<typename T, typename... Args>
     SharedRef<T> make_shared(Args&&... args) {
-        return SharedRef<T>(std::forward<Args>(args)...);
+        SharedRef<T> ref;
+
+        ref.block = new internal::ControlBlock;
+        ref.object_pointer = new T(std::forward<Args>(args)...);
+
+        return ref;
     }
 }
 
