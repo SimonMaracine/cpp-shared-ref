@@ -7,7 +7,7 @@ add_subdirectory(extern/googletest)
 
 add_executable(main "main.cpp")
 
-target_link_libraries(main PRIVATE shared_pointer GTest::gtest_main)
+target_link_libraries(main PRIVATE shared_ref GTest::gtest_main)
 
 target_compile_options(main PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-fno-elide-constructors")
 

@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <memory>
 
-#include <shared_pointer/shared_pointer.hpp>
+#include <shared_ref/shared_ref.hpp>
 #include <gtest/gtest.h>
 
 struct Base {
