@@ -19,6 +19,15 @@ namespace sm {
             }
         }
 
+        weak_ref& operator=(std::nullptr_t) noexcept {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
+
+            return *this;
+        }
+
         ~weak_ref() noexcept {
             destroy_this();
         }
@@ -57,15 +66,6 @@ namespace sm {
 
             other.block = nullptr;
             other.object_pointer = nullptr;
-
-            return *this;
-        }
-
-        weak_ref& operator=(std::nullptr_t) noexcept {
-            destroy_this();
-
-            block = nullptr;
-            object_pointer = nullptr;
 
             return *this;
         }

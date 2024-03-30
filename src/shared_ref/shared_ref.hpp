@@ -21,7 +21,16 @@ namespace sm {
             block = new internal::ControlBlock;
         }
 
-        ~shared_ref() {
+        shared_ref& operator=(std::nullptr_t) noexcept {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
+
+            return *this;
+        }
+
+        ~shared_ref() noexcept {
             destroy_this();
         }
 
@@ -33,7 +42,7 @@ namespace sm {
             }
         }
 
-        shared_ref& operator=(const shared_ref& other) {
+        shared_ref& operator=(const shared_ref& other) noexcept {
             destroy_this();
 
             block = other.block;
@@ -52,7 +61,7 @@ namespace sm {
             other.object_pointer = nullptr;
         }
 
-        shared_ref& operator=(shared_ref&& other) {
+        shared_ref& operator=(shared_ref&& other) noexcept {
             destroy_this();
 
             block = other.block;
@@ -60,15 +69,6 @@ namespace sm {
 
             other.block = nullptr;
             other.object_pointer = nullptr;
-
-            return *this;
-        }
-
-        shared_ref& operator=(std::nullptr_t) {
-            destroy_this();
-
-            block = nullptr;
-            object_pointer = nullptr;
 
             return *this;
         }
@@ -85,16 +85,6 @@ namespace sm {
             return object_pointer != nullptr;
         }
 
-        // TODO operator==
-        // TODO swap
-
-        void reset() {
-            destroy_this();
-
-            block = nullptr;
-            object_pointer = nullptr;
-        }
-
         T* get() const noexcept {
             return object_pointer;
         }
@@ -106,11 +96,31 @@ namespace sm {
 
             return block->ref_count;
         }
+
+        // TODO swap
+
+        void reset() noexcept {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
+        }
+
+        void reset(T* object_pointer) {
+            destroy_this();
+
+            block = new internal::ControlBlock;
+            this->object_pointer = object_pointer;
+        }
+
+        // TODO reset with deleter
     private:
-        void destroy_this() {
+        void destroy_this() noexcept {
             if (block == nullptr) {
                 return;
             }
+
+            // Need to reset the pointers when they are deleted
 
             if (--block->ref_count == 0u) {
                 delete object_pointer;
@@ -118,6 +128,7 @@ namespace sm {
 
                 if (block->weak_count == 0u) {
                     delete block;
+                    block = nullptr;
                 }
             }
         }
@@ -143,6 +154,100 @@ namespace sm {
     }
 }
 
+// Comparison operators with another shared_ref
+
+template<typename T, typename U>
+bool operator==(const sm::shared_ref<T>& lhs, const sm::shared_ref<U>& rhs) noexcept {
+    return lhs.get() == rhs.get();
+}
+
+template<typename T, typename U>
+bool operator!=(const sm::shared_ref<T>& lhs, const sm::shared_ref<U>& rhs) noexcept {
+    return lhs.get() != rhs.get();
+}
+
+template<typename T, typename U>
+bool operator<(const sm::shared_ref<T>& lhs, const sm::shared_ref<U>& rhs) noexcept {
+    return lhs.get() < rhs.get();
+}
+
+template<typename T, typename U>
+bool operator>(const sm::shared_ref<T>& lhs, const sm::shared_ref<U>& rhs) noexcept {
+    return lhs.get() > rhs.get();
+}
+
+template<typename T, typename U>
+bool operator<=(const sm::shared_ref<T>& lhs, const sm::shared_ref<U>& rhs) noexcept {
+    return lhs.get() <= rhs.get();
+}
+
+template<typename T, typename U>
+bool operator>=(const sm::shared_ref<T>& lhs, const sm::shared_ref<U>& rhs) noexcept {
+    return lhs.get() >= rhs.get();
+}
+
+// Comparison operators with nullptr_t
+
+template<typename T>
+bool operator==(const sm::shared_ref<T>& lhs, std::nullptr_t) noexcept {
+    return lhs.get() == nullptr;
+}
+
+template<typename T>
+bool operator==(std::nullptr_t, const sm::shared_ref<T>& rhs) noexcept {
+    return rhs.get() == nullptr;
+}
+
+template<typename T>
+bool operator!=(const sm::shared_ref<T>& lhs, std::nullptr_t) noexcept {
+    return lhs.get() != nullptr;
+}
+
+template<typename T>
+bool operator!=(std::nullptr_t, const sm::shared_ref<T>& rhs) noexcept {
+    return rhs.get() != nullptr;
+}
+
+template<typename T>
+bool operator<(const sm::shared_ref<T>& lhs, std::nullptr_t) noexcept {
+    return false;
+}
+
+template<typename T>
+bool operator<(std::nullptr_t, const sm::shared_ref<T>& rhs) noexcept {
+    return true;
+}
+
+template<typename T>
+bool operator>(const sm::shared_ref<T>& lhs, std::nullptr_t) noexcept {
+    return true;
+}
+
+template<typename T>
+bool operator>(std::nullptr_t, const sm::shared_ref<T>& rhs) noexcept {
+    return false;
+}
+
+template<typename T>
+bool operator<=(const sm::shared_ref<T>& lhs, std::nullptr_t) noexcept {
+    return false;
+}
+
+template<typename T>
+bool operator<=(std::nullptr_t, const sm::shared_ref<T>& rhs) noexcept {
+    return true;
+}
+
+template<typename T>
+bool operator>=(const sm::shared_ref<T>& lhs, std::nullptr_t) noexcept {
+    return true;
+}
+
+template<typename T>
+bool operator>=(std::nullptr_t, const sm::shared_ref<T>& rhs) noexcept {
+    return false;
+}
+
 template<typename T>
 std::ostream& operator<<(std::ostream& stream, const sm::shared_ref<T>& shared_ref) {
     stream << shared_ref.get();
@@ -153,7 +258,7 @@ std::ostream& operator<<(std::ostream& stream, const sm::shared_ref<T>& shared_r
 namespace std {
     template<typename T>
     struct hash<sm::shared_ref<T>> {
-        size_t operator()(const sm::shared_ref<T>& shared_ref) const {
+        size_t operator()(const sm::shared_ref<T>& shared_ref) const noexcept {
             return hash<T*>()(shared_ref.get());
         }
     };
