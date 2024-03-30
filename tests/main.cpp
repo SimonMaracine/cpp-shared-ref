@@ -1,17 +1,11 @@
 #include <string>
 #include <cstring>
 #include <utility>
-#include <memory>
 
 #include <gtest/gtest.h>
 #include <shared_ref/shared_ref.hpp>
 
 #include "types.hpp"
-
-static void original_shared_ptr() {
-    std::shared_ptr<S> ptr;
-    std::shared_ptr<S> ptr2 {ptr};
-}
 
 TEST(shared_ref, NoAllocation) {
     {
@@ -177,7 +171,7 @@ TEST(shared_ref, ReferenceCounting_Move) {
     ASSERT_EQ(ptr.use_count(), 1u);
 }
 
-TEST(shared_ptr, AssignmentNullptr) {
+TEST(shared_ref, AssignmentNullptr) {
     {
         sm::shared_ref<int> ptr {sm::make_shared<int>(21)};
 
@@ -199,7 +193,7 @@ TEST(shared_ptr, AssignmentNullptr) {
     }
 }
 
-TEST(shared_ptr, ResetBare) {
+TEST(shared_ref, ResetBare) {
     {
         sm::shared_ref<int> ptr {sm::make_shared<int>(21)};
 
@@ -221,7 +215,7 @@ TEST(shared_ptr, ResetBare) {
     }
 }
 
-TEST(shared_ptr, ResetValue) {
+TEST(shared_ref, ResetValue) {
     {
         sm::shared_ref<int> ptr {sm::make_shared<int>(21)};
 
@@ -246,7 +240,7 @@ TEST(shared_ptr, ResetValue) {
     }
 }
 
-TEST(shared_ptr, ComparisonOperators) {
+TEST(shared_ref, ComparisonOperators) {
     sm::shared_ref<int> ptr;
     sm::shared_ref<int> ptr2 {sm::make_shared<int>(21)};
     sm::shared_ref<int> ptr3 {ptr2};
@@ -266,4 +260,29 @@ TEST(shared_ptr, ComparisonOperators) {
     ASSERT_TRUE(nullptr == ptr);
     ASSERT_FALSE(nullptr == ptr2);
     ASSERT_FALSE(nullptr != ptr);
+}
+
+TEST(shared_ref, Swap) {
+    sm::shared_ref<int> ptr {sm::make_shared<int>(21)};
+    sm::shared_ref<int> ptr2 {sm::make_shared<int>(30)};
+    sm::shared_ref<int> ptr3 {ptr2};
+
+    ASSERT_EQ(ptr.use_count(), 1u);
+    ASSERT_EQ(*ptr, 21);
+    ASSERT_EQ(ptr2.use_count(), 2u);
+    ASSERT_EQ(*ptr2, 30);
+
+    ptr.swap(ptr2);
+
+    ASSERT_EQ(ptr.use_count(), 2u);
+    ASSERT_EQ(*ptr, 30);
+    ASSERT_EQ(ptr2.use_count(), 1u);
+    ASSERT_EQ(*ptr2, 21);
+
+    std::swap(ptr, ptr2);
+
+    ASSERT_EQ(ptr.use_count(), 1u);
+    ASSERT_EQ(*ptr, 21);
+    ASSERT_EQ(ptr2.use_count(), 2u);
+    ASSERT_EQ(*ptr2, 30);
 }

@@ -97,8 +97,6 @@ namespace sm {
             return block->ref_count;
         }
 
-        // TODO swap
-
         void reset() noexcept {
             destroy_this();
 
@@ -114,6 +112,11 @@ namespace sm {
         }
 
         // TODO reset with deleter
+
+        void swap(shared_ref& other) noexcept {
+            std::swap(block, other.block);
+            std::swap(object_pointer, other.object_pointer);
+        }
     private:
         void destroy_this() noexcept {
             if (block == nullptr) {
@@ -256,6 +259,11 @@ std::ostream& operator<<(std::ostream& stream, const sm::shared_ref<T>& shared_r
 }
 
 namespace std {
+    template<typename T>
+    void swap(sm::shared_ref<T>& lhs, sm::shared_ref<T>& rhs) noexcept {
+        lhs.swap(rhs);
+    }
+
     template<typename T>
     struct hash<sm::shared_ref<T>> {
         size_t operator()(const sm::shared_ref<T>& shared_ref) const noexcept {
