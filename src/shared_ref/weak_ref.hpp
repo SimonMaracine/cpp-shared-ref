@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <utility>
 
 #include "internal/control_block.hpp"
 #include "shared_ref.hpp"
@@ -102,6 +103,11 @@ namespace sm {
             block = nullptr;
             object_pointer = nullptr;
         }
+
+        void swap(weak_ref& other) noexcept {
+            std::swap(block, other.block);
+            std::swap(object_pointer, other.object_pointer);
+        }
     private:
         void destroy_this() noexcept {
             if (block == nullptr) {
@@ -114,4 +120,11 @@ namespace sm {
         internal::ControlBlock* block {nullptr};
         T* object_pointer {nullptr};  // This is always null or something
     };
+}
+
+namespace std {
+    template<typename T>
+    void swap(sm::weak_ref<T>& lhs, sm::weak_ref<T>& rhs) noexcept {
+        lhs.swap(rhs);
+    }
 }

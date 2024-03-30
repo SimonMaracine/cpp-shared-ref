@@ -178,3 +178,30 @@ TEST(weak_ref, Reset) {
         }
     }
 }
+
+TEST(weak_ref, Swap) {
+    sm::shared_ref<int> p {sm::make_shared<int>(21)};
+    sm::shared_ref<int> p2 {sm::make_shared<int>(30)};
+    sm::shared_ref<int> p3 {p2};
+    sm::weak_ref<int> w {p};
+    sm::weak_ref<int> w2 {p3};
+
+    ASSERT_EQ(w.use_count(), 1u);
+    ASSERT_EQ(*w.lock(), 21);
+    ASSERT_EQ(w2.use_count(), 2u);
+    ASSERT_EQ(*w2.lock(), 30);
+
+    w.swap(w2);
+
+    ASSERT_EQ(w.use_count(), 2u);
+    ASSERT_EQ(*w.lock(), 30);
+    ASSERT_EQ(w2.use_count(), 1u);
+    ASSERT_EQ(*w2.lock(), 21);
+
+    std::swap(w, w2);
+
+    ASSERT_EQ(w.use_count(), 1u);
+    ASSERT_EQ(*w.lock(), 21);
+    ASSERT_EQ(w2.use_count(), 2u);
+    ASSERT_EQ(*w2.lock(), 30);
+}
