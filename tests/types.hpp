@@ -31,17 +31,3 @@ struct S {
         return *this;
     }
 };
-
-#if 0
-struct Foo {
-    int bar() const {
-        return 21;
-    }
-
-    void baz(int x) {
-        this->x = x;
-    }
-
-    int x {};
-};
-#endif

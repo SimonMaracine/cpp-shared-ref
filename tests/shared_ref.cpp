@@ -166,7 +166,7 @@ TEST(shared_ref, ReferenceCounting_Move) {
     ASSERT_EQ(p.use_count(), 1u);
 }
 
-TEST(shared_ref, AssignmentNullp) {
+TEST(shared_ref, AssignmentNullptr) {
     {
         sm::shared_ref<int> p {sm::make_shared<int>(21)};
 
