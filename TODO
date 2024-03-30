@@ -1,0 +1,6 @@
+- API and behavior as close as shared_ptr's one
+- speed and memory performance at least as shared_ptr
+- support for polymorphism
+- allocator-aware
+- support for shared from this
+- support for casts

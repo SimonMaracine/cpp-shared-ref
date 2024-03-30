@@ -8,24 +8,24 @@
 
 namespace sm {
     template<typename T>
-    class WeakRef;
+    class weak_ref;
 
     template<typename T>
-    class SharedRef {
+    class shared_ref {
     public:
-        SharedRef() noexcept = default;
-        SharedRef(std::nullptr_t) noexcept {}
+        shared_ref() noexcept = default;
+        shared_ref(std::nullptr_t) noexcept {}
 
-        SharedRef(T* object_pointer)
+        shared_ref(T* object_pointer)
             : object_pointer(object_pointer) {
             block = new internal::ControlBlock;
         }
 
-        ~SharedRef() {
+        ~shared_ref() {
             destroy_this();
         }
 
-        SharedRef(const SharedRef& other) noexcept
+        shared_ref(const shared_ref& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
 
             if (block != nullptr) {
@@ -33,7 +33,7 @@ namespace sm {
             }
         }
 
-        SharedRef& operator=(const SharedRef& other) {
+        shared_ref& operator=(const shared_ref& other) {
             destroy_this();
 
             block = other.block;
@@ -46,13 +46,13 @@ namespace sm {
             return *this;
         }
 
-        SharedRef(SharedRef&& other) noexcept
+        shared_ref(shared_ref&& other) noexcept
             : block(other.block), object_pointer(other.object_pointer) {
             other.block = nullptr;
             other.object_pointer = nullptr;
         }
 
-        SharedRef& operator=(SharedRef&& other) {
+        shared_ref& operator=(shared_ref&& other) {
             destroy_this();
 
             block = other.block;
@@ -64,7 +64,7 @@ namespace sm {
             return *this;
         }
 
-        SharedRef& operator=(std::nullptr_t) {
+        shared_ref& operator=(std::nullptr_t) {
             destroy_this();
 
             block = nullptr;
@@ -126,15 +126,15 @@ namespace sm {
         T* object_pointer {nullptr};
 
         template<typename U, typename... Args>
-        friend SharedRef<U> make_shared(Args&&... args);
+        friend shared_ref<U> make_shared(Args&&... args);
 
         template<typename U>
-        friend class WeakRef;
+        friend class weak_ref;
     };
 
     template<typename T, typename... Args>
-    SharedRef<T> make_shared(Args&&... args) {
-        SharedRef<T> ref;
+    shared_ref<T> make_shared(Args&&... args) {
+        shared_ref<T> ref;
 
         ref.block = new internal::ControlBlock;
         ref.object_pointer = new T(std::forward<Args>(args)...);
@@ -144,7 +144,7 @@ namespace sm {
 }
 
 template<typename T>
-std::ostream& operator<<(std::ostream& stream, const sm::SharedRef<T>& shared_ref) {
+std::ostream& operator<<(std::ostream& stream, const sm::shared_ref<T>& shared_ref) {
     stream << shared_ref.get();
 
     return stream;
@@ -152,8 +152,8 @@ std::ostream& operator<<(std::ostream& stream, const sm::SharedRef<T>& shared_re
 
 namespace std {
     template<typename T>
-    struct hash<sm::SharedRef<T>> {
-        size_t operator()(const sm::SharedRef<T>& shared_ref) const {
+    struct hash<sm::shared_ref<T>> {
+        size_t operator()(const sm::shared_ref<T>& shared_ref) const {
             return hash<T*>()(shared_ref.get());
         }
     };

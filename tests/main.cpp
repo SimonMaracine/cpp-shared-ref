@@ -12,11 +12,11 @@ static void original_shared_ptr() {
     std::shared_ptr<S> ptr2 {ptr};
 }
 
-TEST(SharedRef, NoAllocation) {
+TEST(shared_ref, NoAllocation) {
     {
-        sm::SharedRef<S> ptr;
-        sm::SharedRef<S> ptr2 {ptr};
-        sm::SharedRef<S> ptr3 = ptr;
+        sm::shared_ref<S> ptr;
+        sm::shared_ref<S> ptr2 {ptr};
+        sm::shared_ref<S> ptr3 = ptr;
 
         ASSERT_TRUE(!ptr);
         ASSERT_EQ(ptr.use_count(), 0u);
@@ -32,7 +32,7 @@ TEST(SharedRef, NoAllocation) {
     }
 
     {
-        sm::SharedRef<S> ptr {nullptr};
+        sm::shared_ref<S> ptr {nullptr};
 
         ASSERT_TRUE(!ptr);
         ASSERT_EQ(ptr.use_count(), 0u);
@@ -40,8 +40,8 @@ TEST(SharedRef, NoAllocation) {
     }
 }
 
-TEST(SharedRef, AllocationInt) {
-    sm::SharedRef<int> ptr {sm::make_shared<int>(21)};
+TEST(shared_ref, AllocationInt) {
+    sm::shared_ref<int> ptr {sm::make_shared<int>(21)};
 
     ASSERT_TRUE(ptr);
     ASSERT_EQ(ptr.use_count(), 1u);
@@ -49,11 +49,11 @@ TEST(SharedRef, AllocationInt) {
     ASSERT_EQ(*ptr, 21);
 }
 
-TEST(SharedRef, AllocationString) {
+TEST(shared_ref, AllocationString) {
     {
         const char* STRING = "hello";
 
-        sm::SharedRef<std::string> ptr {sm::make_shared<std::string>(STRING)};
+        sm::shared_ref<std::string> ptr {sm::make_shared<std::string>(STRING)};
 
         ASSERT_TRUE(ptr);
         ASSERT_EQ(ptr.use_count(), 1u);
@@ -65,7 +65,7 @@ TEST(SharedRef, AllocationString) {
     {
         const char* STRING = "Hello, world! This string is not optimized, as it's too large.";
 
-        sm::SharedRef<std::string> ptr {sm::make_shared<std::string>(STRING)};
+        sm::shared_ref<std::string> ptr {sm::make_shared<std::string>(STRING)};
 
         ASSERT_TRUE(ptr);
         ASSERT_EQ(ptr.use_count(), 1u);
