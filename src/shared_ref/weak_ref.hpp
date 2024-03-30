@@ -9,14 +9,18 @@ namespace sm {
     template<typename T>
     class weak_ref {
     public:
-        weak_ref() noexcept = default;
+        constexpr weak_ref() noexcept = default;
         weak_ref(std::nullptr_t) noexcept {}
 
-        weak_ref(shared_ref<T>& shared_pointer) noexcept
-            : block(shared_pointer.block), object_pointer(shared_pointer.object_pointer) {
+        weak_ref(const shared_ref<T>& ref) noexcept
+            : block(ref.block), object_pointer(ref.object_pointer) {
             if (block != nullptr) {
                 block->weak_count++;
             }
+        }
+
+        ~weak_ref() noexcept {
+            destroy_this();
         }
 
         weak_ref& operator=(std::nullptr_t) noexcept {
@@ -26,10 +30,6 @@ namespace sm {
             object_pointer = nullptr;
 
             return *this;
-        }
-
-        ~weak_ref() noexcept {
-            destroy_this();
         }
 
         weak_ref(const weak_ref& other) noexcept
@@ -70,13 +70,6 @@ namespace sm {
             return *this;
         }
 
-        void reset() noexcept {
-            destroy_this();
-
-            block = nullptr;
-            object_pointer = nullptr;
-        }
-
         std::size_t use_count() const noexcept {
             if (block == nullptr) {
                 return 0u;
@@ -86,14 +79,10 @@ namespace sm {
         }
 
         bool expired() const noexcept {
-            if (block == nullptr) {
-                return true;
-            }
-
-            return block->ref_count == 0u;
+            return use_count() == 0u;
         }
 
-        shared_ref<T> lock() {
+        shared_ref<T> lock() const noexcept {
             shared_ref<T> ref;
 
             if (!expired()) {
@@ -105,6 +94,13 @@ namespace sm {
             }
 
             return ref;
+        }
+
+        void reset() noexcept {
+            destroy_this();
+
+            block = nullptr;
+            object_pointer = nullptr;
         }
     private:
         void destroy_this() noexcept {

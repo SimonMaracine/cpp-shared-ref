@@ -21,6 +21,10 @@ namespace sm {
             block = new internal::ControlBlock;
         }
 
+        ~shared_ref() noexcept {
+            destroy_this();
+        }
+
         shared_ref& operator=(std::nullptr_t) noexcept {
             destroy_this();
 
@@ -28,10 +32,6 @@ namespace sm {
             object_pointer = nullptr;
 
             return *this;
-        }
-
-        ~shared_ref() noexcept {
-            destroy_this();
         }
 
         shared_ref(const shared_ref& other) noexcept
@@ -73,7 +73,7 @@ namespace sm {
             return *this;
         }
 
-        T* operator->() const noexcept {
+        T* get() const noexcept {
             return object_pointer;
         }
 
@@ -81,11 +81,7 @@ namespace sm {
             return *object_pointer;
         }
 
-        operator bool() const noexcept {
-            return object_pointer != nullptr;
-        }
-
-        T* get() const noexcept {
+        T* operator->() const noexcept {
             return object_pointer;
         }
 
@@ -95,6 +91,10 @@ namespace sm {
             }
 
             return block->ref_count;
+        }
+
+        operator bool() const noexcept {
+            return object_pointer != nullptr;
         }
 
         void reset() noexcept {
@@ -252,8 +252,8 @@ bool operator>=(std::nullptr_t, const sm::shared_ref<T>& rhs) noexcept {
 }
 
 template<typename T>
-std::ostream& operator<<(std::ostream& stream, const sm::shared_ref<T>& shared_ref) {
-    stream << shared_ref.get();
+std::ostream& operator<<(std::ostream& stream, const sm::shared_ref<T>& ref) {
+    stream << ref.get();
 
     return stream;
 }
@@ -266,8 +266,8 @@ namespace std {
 
     template<typename T>
     struct hash<sm::shared_ref<T>> {
-        size_t operator()(const sm::shared_ref<T>& shared_ref) const noexcept {
-            return hash<T*>()(shared_ref.get());
+        size_t operator()(const sm::shared_ref<T>& ref) const noexcept {
+            return hash<T*>()(ref.get());
         }
     };
 }
