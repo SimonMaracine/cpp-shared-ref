@@ -39,14 +39,14 @@ namespace sm {
         shared_ref& operator=(std::nullptr_t) noexcept {
             destroy_this();
 
-            block = nullptr;
             object_ptr = nullptr;
+            block = nullptr;
 
             return *this;
         }
 
         shared_ref(const shared_ref& other) noexcept
-            : block(other.block), object_ptr(other.object_ptr) {
+            : object_ptr(other.object_ptr), block(other.block) {
 
             if (block != nullptr) {
                 block->ref_count++;
@@ -56,8 +56,8 @@ namespace sm {
         shared_ref& operator=(const shared_ref& other) noexcept {
             destroy_this();
 
-            block = other.block;
             object_ptr = other.object_ptr;
+            block = other.block;
 
             if (block != nullptr) {
                 block->ref_count++;
@@ -67,19 +67,19 @@ namespace sm {
         }
 
         shared_ref(shared_ref&& other) noexcept
-            : block(other.block), object_ptr(other.object_ptr) {
-            other.block = nullptr;
+            : object_ptr(other.object_ptr), block(other.block) {
             other.object_ptr = nullptr;
+            other.block = nullptr;
         }
 
         shared_ref& operator=(shared_ref&& other) noexcept {
             destroy_this();
 
-            block = other.block;
             object_ptr = other.object_ptr;
+            block = other.block;
 
-            other.block = nullptr;
             other.object_ptr = nullptr;
+            other.block = nullptr;
 
             return *this;
         }
@@ -111,28 +111,28 @@ namespace sm {
         void reset() noexcept {
             destroy_this();
 
-            block = nullptr;
             object_ptr = nullptr;
+            block = nullptr;
         }
 
         void reset(T* ptr) {
             destroy_this();
 
-            block = new internal::ControlBlock<T>(ptr);
             object_ptr = ptr;
+            block = new internal::ControlBlock<T>(ptr);
         }
 
         template<typename Deleter>
         void reset(T* ptr, Deleter deleter) {
             destroy_this();
 
-            block = new internal::ControlBlock<T>(ptr, deleter);
             object_ptr = ptr;
+            block = new internal::ControlBlock<T>(ptr, deleter);
         }
 
         void swap(shared_ref& other) noexcept {
-            std::swap(block, other.block);
             std::swap(object_ptr, other.object_ptr);
+            std::swap(block, other.block);
         }
     private:
         void destroy_this() noexcept {
@@ -153,8 +153,8 @@ namespace sm {
             }
         }
 
-        internal::ControlBlock<T>* block {nullptr};
         T* object_ptr {nullptr};
+        internal::ControlBlock<T>* block {nullptr};
 
         template<typename U, typename... Args>
         friend shared_ref<U> make_shared(Args&&... args);
