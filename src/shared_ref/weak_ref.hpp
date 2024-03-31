@@ -118,7 +118,7 @@ namespace sm {
         }
 
         T* object_ptr {nullptr};
-        internal::ControlBlock<T>* block {nullptr};
+        internal::ControlBlock* block {nullptr};
     };
 }
 

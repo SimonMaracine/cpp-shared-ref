@@ -31,3 +31,33 @@ struct S {
         return *this;
     }
 };
+
+struct Base {
+    virtual ~Base() = default;
+
+    virtual int x() const {
+        return 21;
+    }
+};
+
+struct Derived : Base {
+    int x() const override {
+        return 30;
+    }
+};
+
+struct Derived2 : Base {
+    int x() const override {
+        return 52;
+    }
+};
+
+struct Foo {
+    int bar() const {
+        return 21;
+    }
+
+    int bar() {
+        return 30;
+    }
+};

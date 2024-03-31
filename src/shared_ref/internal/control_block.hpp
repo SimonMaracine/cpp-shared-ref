@@ -30,13 +30,13 @@ namespace sm {
             Deleter deleter;
         };
 
-        template<typename T>
         struct ControlBlock {
+            template<typename T>
             ControlBlock(T* ptr) {
                 deleter_base = new SharedRefDeleter(ptr, DefaultDeleter<T>());
             }
 
-            template<typename Deleter>
+            template<typename T, typename Deleter>
             ControlBlock(T* ptr, Deleter deleter) {
                 deleter_base = new SharedRefDeleter(ptr, deleter);
             }

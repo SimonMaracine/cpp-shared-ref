@@ -18,18 +18,27 @@ namespace sm {
 
         shared_ref(T* ptr)
             : object_ptr(ptr) {
-            block = new internal::ControlBlock<T>(ptr);
+            block = new internal::ControlBlock(ptr);
         }
 
         template<typename Deleter>
         shared_ref(T* ptr, Deleter deleter)
             : object_ptr(ptr) {
-            block = new internal::ControlBlock<T>(ptr, deleter);
+            block = new internal::ControlBlock(ptr, deleter);
         }
 
         template<typename Deleter>
         shared_ref(std::nullptr_t, Deleter deleter) {
-            block = new internal::ControlBlock<T>(nullptr, deleter);
+            block = new internal::ControlBlock(static_cast<T*>(nullptr), deleter);
+        }
+
+        // Constructor used by casts
+        template<typename U>
+        shared_ref(const shared_ref<U>& other, T* ptr)
+            : object_ptr(ptr), block(other.block) {
+            if (block != nullptr) {
+                block->ref_count++;
+            }
         }
 
         ~shared_ref() noexcept {
@@ -47,7 +56,6 @@ namespace sm {
 
         shared_ref(const shared_ref& other) noexcept
             : object_ptr(other.object_ptr), block(other.block) {
-
             if (block != nullptr) {
                 block->ref_count++;
             }
@@ -119,7 +127,7 @@ namespace sm {
             destroy_this();
 
             object_ptr = ptr;
-            block = new internal::ControlBlock<T>(ptr);
+            block = new internal::ControlBlock(ptr);
         }
 
         template<typename Deleter>
@@ -127,7 +135,7 @@ namespace sm {
             destroy_this();
 
             object_ptr = ptr;
-            block = new internal::ControlBlock<T>(ptr, deleter);
+            block = new internal::ControlBlock(ptr, deleter);
         }
 
         void swap(shared_ref& other) noexcept {
@@ -154,13 +162,17 @@ namespace sm {
         }
 
         T* object_ptr {nullptr};
-        internal::ControlBlock<T>* block {nullptr};
+        internal::ControlBlock* block {nullptr};
 
         template<typename U, typename... Args>
         friend shared_ref<U> make_shared(Args&&... args);
 
         template<typename U>
         friend class weak_ref;
+
+        // This is needed by polymorphism
+        template<typename U>
+        friend class shared_ref;
     };
 
     template<typename T, typename... Args>
@@ -168,9 +180,43 @@ namespace sm {
         shared_ref<T> ref;
 
         ref.object_ptr = new T(std::forward<Args>(args)...);
-        ref.block = new internal::ControlBlock<T>(ref.object_ptr);
+        ref.block = new internal::ControlBlock(ref.object_ptr);
 
         return ref;
+    }
+
+    // Cast functions
+
+    template<typename T, typename U>
+    shared_ref<T> static_ref_cast(const shared_ref<U>& other) noexcept {
+        T* ptr {static_cast<T*>(other.get())};
+
+        return shared_ref<T>(other, ptr);
+    }
+
+    template<typename T, typename U>
+    shared_ref<T> dynamic_ref_cast(const shared_ref<U>& other) noexcept {
+        T* ptr {dynamic_cast<T*>(other.get())};
+
+        if (ptr == nullptr) {
+            return shared_ref<T>();
+        } else {
+            return shared_ref<T>(other, ptr);
+        }
+    }
+
+    template<typename T, typename U>
+    shared_ref<T> const_ref_cast(const shared_ref<U>& other) noexcept {
+        T* ptr {const_cast<T*>(other.get())};
+
+        return shared_ref<T>(other, ptr);
+    }
+
+    template<typename T, typename U>
+    shared_ref<T> reinterpret_ref_cast(const shared_ref<U>& other) noexcept {
+        T* ptr {reinterpret_cast<T*>(other.get())};
+
+        return shared_ref<T>(other, ptr);
     }
 }
 

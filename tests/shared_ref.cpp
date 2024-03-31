@@ -307,3 +307,52 @@ TEST(shared_ref, CustomDeleter) {
 
     p3.reset(i2, destroy);
 }
+
+TEST(shared_ref, Casts) {
+    {
+        sm::shared_ref<Derived> p {sm::make_shared<Derived>()};
+        sm::shared_ref<Base> p2 {sm::static_ref_cast<Base>(p)};
+
+        ASSERT_EQ(p->x(), 30);
+        ASSERT_EQ(p2->x(), 30);
+
+        ASSERT_EQ(p.use_count(), 2u);
+        ASSERT_EQ(p2.use_count(), 2u);
+    }
+
+    {
+        sm::shared_ref<Derived2> p {sm::make_shared<Derived2>()};
+        sm::shared_ref<Base> p2 {sm::static_ref_cast<Base>(p)};
+
+        sm::shared_ref<Derived> p3 {sm::dynamic_ref_cast<Derived>(p)};
+
+        ASSERT_TRUE(p3 == nullptr);
+
+        ASSERT_EQ(p.use_count(), 2u);
+        ASSERT_EQ(p2.use_count(), 2u);
+    }
+
+    {
+        sm::shared_ref<Derived2> p {sm::make_shared<Derived2>()};
+        sm::shared_ref<Base> p2 {sm::static_ref_cast<Base>(p)};
+
+        sm::shared_ref<Derived2> p3 {sm::dynamic_ref_cast<Derived2>(p)};
+
+        ASSERT_EQ(p3->x(), 52);
+
+        ASSERT_EQ(p.use_count(), 3u);
+        ASSERT_EQ(p2.use_count(), 3u);
+        ASSERT_EQ(p3.use_count(), 3u);
+    }
+
+    {
+        sm::shared_ref<Foo> p {sm::make_shared<Foo>()};
+        sm::shared_ref<const Foo> p2 {sm::const_ref_cast<const Foo>(p)};
+
+        ASSERT_EQ(p->bar(), 30);
+        ASSERT_EQ(p2->bar(), 21);
+
+        ASSERT_EQ(p.use_count(), 2u);
+        ASSERT_EQ(p2.use_count(), 2u);
+    }
+}
