@@ -356,3 +356,67 @@ TEST(shared_ref, Casts) {
         ASSERT_EQ(p2.use_count(), 2u);
     }
 }
+
+TEST(shared_ref, Polymorphism) {
+    {
+        sm::shared_ref<Base> p {sm::make_shared<Derived>()};
+
+        ASSERT_EQ(p->x(), 30);
+    }
+
+    {
+        sm::shared_ref<Base> p;
+        p = sm::make_shared<Derived>();
+
+        ASSERT_EQ(p->x(), 30);
+    }
+
+    {
+        sm::shared_ref<Derived> p {sm::make_shared<Derived>()};
+        sm::shared_ref<Base> p2 {std::move(p)};
+
+        ASSERT_EQ(p2->x(), 30);
+        ASSERT_EQ(p2.use_count(), 1u);
+    }
+
+    {
+        sm::shared_ref<Derived> p {sm::make_shared<Derived>()};
+        sm::shared_ref<Base> p2;
+        p2 = std::move(p);
+
+        ASSERT_EQ(p2->x(), 30);
+        ASSERT_EQ(p2.use_count(), 1u);
+    }
+
+    {
+        sm::shared_ref<Base> p {sm::make_shared<Derived>()};
+        p.reset(new Derived2);
+
+        ASSERT_EQ(p->x(), 52);
+        ASSERT_EQ(p.use_count(), 1u);
+    }
+}
+
+static void destroy2(int* i) {
+    std::free(i);
+}
+
+TEST(shared_ref, GetDeleter) {
+    {
+        int* i {static_cast<int*>(std::malloc(sizeof(int)))};
+
+        sm::shared_ref<int> p {i, destroy2};
+
+        auto deleter {sm::get_deleter<void(*)(int*)>(p)};
+
+        ASSERT_EQ(*deleter, destroy2);
+    }
+
+    {
+        sm::shared_ref<int> p {sm::make_shared<int>(21)};
+
+        auto deleter {sm::get_deleter<void(*)(int*)>(p)};
+
+        ASSERT_EQ(deleter, nullptr);
+    }
+}

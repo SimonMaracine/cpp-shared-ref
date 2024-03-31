@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstddef>
+#include <typeinfo>
+#include <memory>
 
 namespace sm {
     namespace internal {
@@ -14,6 +16,7 @@ namespace sm {
         struct DeleterBase {
             virtual ~DeleterBase() noexcept = default;
             virtual void destroy() const noexcept = 0;
+            virtual void* get_deleter(const std::type_info& ti) noexcept = 0;
         };
 
         template<typename T, typename Deleter>
@@ -24,6 +27,14 @@ namespace sm {
 
             void destroy() const noexcept override {
                 deleter(ptr);
+            }
+
+            void* get_deleter(const std::type_info& ti) noexcept override {
+                if (ti == typeid(Deleter)) {
+                    return std::addressof(deleter);
+                } else {
+                    return nullptr;
+                }
             }
         private:
             T* ptr {nullptr};
@@ -52,7 +63,7 @@ namespace sm {
             std::size_t strong_count {1u};
             std::size_t weak_count {0u};
 
-            const DeleterBase* deleter_base {nullptr};
+            DeleterBase* deleter_base {nullptr};
         };
     }
 }
