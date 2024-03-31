@@ -17,19 +17,19 @@ namespace sm {
         constexpr shared_ref(std::nullptr_t) noexcept {}
 
         shared_ref(T* ptr)
-            : object_pointer(ptr) {
-            block = new internal::ControlBlock<T>;
+            : object_ptr(ptr) {
+            block = new internal::ControlBlock<T>(ptr);
         }
 
         template<typename Deleter>
         shared_ref(T* ptr, Deleter deleter)
-            : object_pointer(ptr) {
-            block = new internal::ControlBlock<T>(deleter);
+            : object_ptr(ptr) {
+            block = new internal::ControlBlock<T>(ptr, deleter);
         }
 
         template<typename Deleter>
         shared_ref(std::nullptr_t, Deleter deleter) {
-            block = new internal::ControlBlock<T>(deleter);
+            block = new internal::ControlBlock<T>(nullptr, deleter);
         }
 
         ~shared_ref() noexcept {
@@ -40,13 +40,13 @@ namespace sm {
             destroy_this();
 
             block = nullptr;
-            object_pointer = nullptr;
+            object_ptr = nullptr;
 
             return *this;
         }
 
         shared_ref(const shared_ref& other) noexcept
-            : block(other.block), object_pointer(other.object_pointer) {
+            : block(other.block), object_ptr(other.object_ptr) {
 
             if (block != nullptr) {
                 block->ref_count++;
@@ -57,7 +57,7 @@ namespace sm {
             destroy_this();
 
             block = other.block;
-            object_pointer = other.object_pointer;
+            object_ptr = other.object_ptr;
 
             if (block != nullptr) {
                 block->ref_count++;
@@ -67,33 +67,33 @@ namespace sm {
         }
 
         shared_ref(shared_ref&& other) noexcept
-            : block(other.block), object_pointer(other.object_pointer) {
+            : block(other.block), object_ptr(other.object_ptr) {
             other.block = nullptr;
-            other.object_pointer = nullptr;
+            other.object_ptr = nullptr;
         }
 
         shared_ref& operator=(shared_ref&& other) noexcept {
             destroy_this();
 
             block = other.block;
-            object_pointer = other.object_pointer;
+            object_ptr = other.object_ptr;
 
             other.block = nullptr;
-            other.object_pointer = nullptr;
+            other.object_ptr = nullptr;
 
             return *this;
         }
 
         T* get() const noexcept {
-            return object_pointer;
+            return object_ptr;
         }
 
         T& operator*() const noexcept {
-            return *object_pointer;
+            return *object_ptr;
         }
 
         T* operator->() const noexcept {
-            return object_pointer;
+            return object_ptr;
         }
 
         std::size_t use_count() const noexcept {
@@ -105,34 +105,34 @@ namespace sm {
         }
 
         operator bool() const noexcept {
-            return object_pointer != nullptr;
+            return object_ptr != nullptr;
         }
 
         void reset() noexcept {
             destroy_this();
 
             block = nullptr;
-            object_pointer = nullptr;
+            object_ptr = nullptr;
         }
 
         void reset(T* ptr) {
             destroy_this();
 
-            block = new internal::ControlBlock<T>;
-            object_pointer = ptr;
+            block = new internal::ControlBlock<T>(ptr);
+            object_ptr = ptr;
         }
 
         template<typename Deleter>
         void reset(T* ptr, Deleter deleter) {
             destroy_this();
 
-            block = new internal::ControlBlock<T>(deleter);
-            object_pointer = ptr;
+            block = new internal::ControlBlock<T>(ptr, deleter);
+            object_ptr = ptr;
         }
 
         void swap(shared_ref& other) noexcept {
             std::swap(block, other.block);
-            std::swap(object_pointer, other.object_pointer);
+            std::swap(object_ptr, other.object_ptr);
         }
     private:
         void destroy_this() noexcept {
@@ -143,8 +143,8 @@ namespace sm {
             // Need to reset the pointers when they are deleted
 
             if (--block->ref_count == 0u) {
-                block->destroy(object_pointer);
-                object_pointer = nullptr;
+                block->destroy();
+                object_ptr = nullptr;
 
                 if (block->weak_count == 0u) {
                     delete block;
@@ -154,7 +154,7 @@ namespace sm {
         }
 
         internal::ControlBlock<T>* block {nullptr};
-        T* object_pointer {nullptr};
+        T* object_ptr {nullptr};
 
         template<typename U, typename... Args>
         friend shared_ref<U> make_shared(Args&&... args);
@@ -167,8 +167,8 @@ namespace sm {
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
 
-        ref.block = new internal::ControlBlock<T>;
-        ref.object_pointer = new T(std::forward<Args>(args)...);
+        ref.object_ptr = new T(std::forward<Args>(args)...);
+        ref.block = new internal::ControlBlock<T>(ref.object_ptr);
 
         return ref;
     }
