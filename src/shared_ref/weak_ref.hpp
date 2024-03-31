@@ -11,7 +11,7 @@ namespace sm {
     class weak_ref {
     public:
         constexpr weak_ref() noexcept = default;
-        weak_ref(std::nullptr_t) noexcept {}
+        constexpr weak_ref(std::nullptr_t) noexcept {}
 
         weak_ref(const shared_ref<T>& ref) noexcept
             : block(ref.block), object_pointer(ref.object_pointer) {
@@ -117,7 +117,7 @@ namespace sm {
             block->weak_count--;
         }
 
-        internal::ControlBlock* block {nullptr};
+        internal::ControlBlock<T>* block {nullptr};
         T* object_pointer {nullptr};  // This is always null or something
     };
 }

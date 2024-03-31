@@ -1,6 +1,7 @@
 #include <string>
 #include <cstring>
 #include <utility>
+#include <cstdlib>
 
 #include <gtest/gtest.h>
 #include <shared_ref/shared_ref.hpp>
@@ -280,4 +281,29 @@ TEST(shared_ref, Swap) {
     ASSERT_EQ(*p, 21);
     ASSERT_EQ(p2.use_count(), 2u);
     ASSERT_EQ(*p2, 30);
+}
+
+static void destroy(int* i) {
+    std::free(i);
+}
+
+TEST(shared_ref, CustomDeleter) {
+    int* i {static_cast<int*>(std::malloc(sizeof(int)))};
+    int* i2 {static_cast<int*>(std::malloc(sizeof(int)))};
+
+    *i = 21;
+    *i2 = 21;
+
+    struct Del {
+        void operator()(int* i) const noexcept {
+            std::free(i);
+        }
+    };
+
+    sm::shared_ref<int> p {i, Del()};
+    sm::shared_ref<int> p2 {nullptr, [](int* i) { std::free(i); }};
+
+    sm::shared_ref<int> p3 {new int(30)};
+
+    p3.reset(i2, destroy);
 }

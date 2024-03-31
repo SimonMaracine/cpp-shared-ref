@@ -13,12 +13,23 @@ namespace sm {
     template<typename T>
     class shared_ref {
     public:
-        shared_ref() noexcept = default;
-        shared_ref(std::nullptr_t) noexcept {}
+        constexpr shared_ref() noexcept = default;
+        constexpr shared_ref(std::nullptr_t) noexcept {}
 
-        shared_ref(T* object_pointer)
-            : object_pointer(object_pointer) {
-            block = new internal::ControlBlock;
+        shared_ref(T* ptr)
+            : object_pointer(ptr) {
+            block = new internal::ControlBlock<T>;
+        }
+
+        template<typename Deleter>
+        shared_ref(T* ptr, Deleter deleter)
+            : object_pointer(ptr) {
+            block = new internal::ControlBlock<T>(deleter);
+        }
+
+        template<typename Deleter>
+        shared_ref(std::nullptr_t, Deleter deleter) {
+            block = new internal::ControlBlock<T>(deleter);
         }
 
         ~shared_ref() noexcept {
@@ -104,14 +115,20 @@ namespace sm {
             object_pointer = nullptr;
         }
 
-        void reset(T* object_pointer) {
+        void reset(T* ptr) {
             destroy_this();
 
-            block = new internal::ControlBlock;
-            this->object_pointer = object_pointer;
+            block = new internal::ControlBlock<T>;
+            object_pointer = ptr;
         }
 
-        // TODO reset with deleter
+        template<typename Deleter>
+        void reset(T* ptr, Deleter deleter) {
+            destroy_this();
+
+            block = new internal::ControlBlock<T>(deleter);
+            object_pointer = ptr;
+        }
 
         void swap(shared_ref& other) noexcept {
             std::swap(block, other.block);
@@ -126,7 +143,7 @@ namespace sm {
             // Need to reset the pointers when they are deleted
 
             if (--block->ref_count == 0u) {
-                delete object_pointer;
+                block->destroy(object_pointer);
                 object_pointer = nullptr;
 
                 if (block->weak_count == 0u) {
@@ -136,7 +153,7 @@ namespace sm {
             }
         }
 
-        internal::ControlBlock* block {nullptr};
+        internal::ControlBlock<T>* block {nullptr};
         T* object_pointer {nullptr};
 
         template<typename U, typename... Args>
@@ -150,7 +167,7 @@ namespace sm {
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
 
-        ref.block = new internal::ControlBlock;
+        ref.block = new internal::ControlBlock<T>;
         ref.object_pointer = new T(std::forward<Args>(args)...);
 
         return ref;
