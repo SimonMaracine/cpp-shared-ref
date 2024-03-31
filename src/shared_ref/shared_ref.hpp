@@ -34,10 +34,10 @@ namespace sm {
 
         // Constructor used by casts
         template<typename U>
-        shared_ref(const shared_ref<U>& other, T* ptr)
+        shared_ref(const shared_ref<U>& other, T* ptr) noexcept
             : object_ptr(ptr), block(other.block) {
             if (block != nullptr) {
-                block->ref_count++;
+                block->strong_count++;
             }
         }
 
@@ -57,7 +57,7 @@ namespace sm {
         shared_ref(const shared_ref& other) noexcept
             : object_ptr(other.object_ptr), block(other.block) {
             if (block != nullptr) {
-                block->ref_count++;
+                block->strong_count++;
             }
         }
 
@@ -68,7 +68,7 @@ namespace sm {
             block = other.block;
 
             if (block != nullptr) {
-                block->ref_count++;
+                block->strong_count++;
             }
 
             return *this;
@@ -109,7 +109,7 @@ namespace sm {
                 return 0u;
             }
 
-            return block->ref_count;
+            return block->strong_count;
         }
 
         operator bool() const noexcept {
@@ -150,7 +150,7 @@ namespace sm {
 
             // Need to reset the pointers when they are deleted
 
-            if (--block->ref_count == 0u) {
+            if (--block->strong_count == 0u) {
                 block->destroy();
                 object_ptr = nullptr;
 

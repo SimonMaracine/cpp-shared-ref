@@ -49,7 +49,7 @@ namespace sm {
                 deleter_base->destroy();
             }
 
-            std::size_t ref_count {1u};
+            std::size_t strong_count {1u};
             std::size_t weak_count {0u};
 
             const DeleterBase* deleter_base {nullptr};

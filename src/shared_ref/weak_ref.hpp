@@ -76,7 +76,7 @@ namespace sm {
                 return 0u;
             }
 
-            return block->ref_count;
+            return block->strong_count;
         }
 
         bool expired() const noexcept {
@@ -91,7 +91,7 @@ namespace sm {
                 ref.block = block;
 
                 // Increment the reference count, as we just created a new strong reference
-                block->ref_count++;
+                block->strong_count++;
             }
 
             return ref;
