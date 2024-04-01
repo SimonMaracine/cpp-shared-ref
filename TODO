@@ -5,3 +5,6 @@
 - allocator-aware
 - support for shared from this
 - support for casts
+
+- profile shared_ref and shared_ptr and compare the performance
+- use valgrind to study allocations

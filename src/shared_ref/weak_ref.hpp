@@ -114,7 +114,10 @@ namespace sm {
                 return;
             }
 
-            block->weak_count--;
+            if (--block->weak_count == 0u && block->strong_count == 0u) {
+                delete block;
+                block = nullptr;
+            }
         }
 
         T* object_ptr {nullptr};
