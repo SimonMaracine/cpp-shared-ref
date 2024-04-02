@@ -7,4 +7,5 @@
 - support for casts
 
 - profile shared_ref and shared_ptr and compare the performance
-- use valgrind to study allocations
+- use valgrind to see allocations
+- see generated code for both

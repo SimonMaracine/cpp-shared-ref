@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <typeinfo>
-#include <memory>
 
 namespace sm {
     namespace internal {
@@ -31,7 +30,7 @@ namespace sm {
 
             void* get_deleter(const std::type_info& ti) noexcept override {
                 if (ti == typeid(Deleter)) {
-                    return std::addressof(deleter);
+                    return &deleter;  // TODO GCC uses addressof
                 } else {
                     return nullptr;
                 }
