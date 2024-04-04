@@ -118,7 +118,7 @@ namespace sm {
             other.block = nullptr;
         }
 
-        // Move assigments
+        // Move assignments
 
         shared_ref& operator=(shared_ref&& other) noexcept {
             destroy_this();
