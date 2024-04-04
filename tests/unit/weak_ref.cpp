@@ -20,13 +20,16 @@ TEST(weak_ref, NoAllocation) {
 
 TEST(weak_ref, ReferenceCounting_Copy) {
     sm::weak_ref<int> w;
+    sm::weak_ref<int> we;
 
     {
         sm::shared_ref<int> p {sm::make_shared<int>(21)};
         w = p;
+        we = w;
 
         ASSERT_EQ(p.use_count(), 1u);
         ASSERT_EQ(w.use_count(), 1u);
+        ASSERT_EQ(we.use_count(), 1u);
 
         {
             sm::weak_ref<int> w2 {w};
@@ -49,6 +52,7 @@ TEST(weak_ref, ReferenceCounting_Copy) {
     }
 
     ASSERT_EQ(w.use_count(), 0u);
+    ASSERT_EQ(we.use_count(), 0u);
 }
 
 TEST(weak_ref, ReferenceCounting_Move) {
