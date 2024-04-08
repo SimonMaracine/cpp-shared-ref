@@ -161,6 +161,10 @@ namespace sm {
             return block.base->strong_count;
         }
 
+        bool unique() const noexcept {
+            return use_count() == 1u;
+        }
+
         operator bool() const noexcept {
             return object_ptr != nullptr;
         }

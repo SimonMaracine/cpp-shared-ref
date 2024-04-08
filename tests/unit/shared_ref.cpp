@@ -420,3 +420,17 @@ TEST(shared_ref, GetDeleter) {
         ASSERT_EQ(deleter, nullptr);
     }
 }
+
+TEST(shared_ref, Unique) {
+    sm::shared_ref<int> p {sm::make_shared<int>(21)};
+    ASSERT_TRUE(p.unique());
+
+    {
+        sm::shared_ref<int> p2 {p};
+
+        ASSERT_FALSE(p.unique());
+        ASSERT_FALSE(p2.unique());
+    }
+
+    ASSERT_TRUE(p.unique());
+}
