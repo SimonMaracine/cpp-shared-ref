@@ -12,16 +12,19 @@ namespace sm {
             }
         };
 
-        struct DeleterBase {
-            virtual ~DeleterBase() noexcept = default;
+        struct ControlBlockBase {
+            virtual ~ControlBlockBase() noexcept = default;
             virtual void destroy() const noexcept = 0;
             virtual void* get_deleter(const std::type_info& ti) noexcept = 0;
+
+            std::size_t strong_count {1u};
+            std::size_t weak_count {0u};
         };
 
         template<typename T, typename Deleter>
-        class SharedRefDeleter : public DeleterBase {
+        class ControlBlock : public ControlBlockBase {
         public:
-            SharedRefDeleter(T* ptr, Deleter deleter)
+            ControlBlock(T* ptr, Deleter deleter)
                 : ptr(ptr), deleter(deleter) {}
 
             void destroy() const noexcept override {
@@ -40,29 +43,29 @@ namespace sm {
             Deleter deleter;
         };
 
-        struct ControlBlock {
+        struct ControlBlockWrapper {
+            ControlBlockWrapper() noexcept = default;
+
             template<typename T>
-            ControlBlock(T* ptr) {
-                deleter_base = new SharedRefDeleter(ptr, DefaultDeleter<T>());
+            ControlBlockWrapper(T* ptr) {
+                base = new ControlBlock(ptr, DefaultDeleter<T>());
             }
 
             template<typename T, typename Deleter>
-            ControlBlock(T* ptr, Deleter deleter) {
-                deleter_base = new SharedRefDeleter(ptr, deleter);
+            ControlBlockWrapper(T* ptr, Deleter deleter) {
+                base = new ControlBlock(ptr, deleter);
             }
 
-            ~ControlBlock() noexcept {
-                delete deleter_base;
+            void destroy() noexcept {
+                delete base;
+                base = nullptr;
             }
 
-            void destroy() const noexcept {
-                deleter_base->destroy();
+            operator bool() const noexcept {
+                return base != nullptr;
             }
 
-            std::size_t strong_count {1u};
-            std::size_t weak_count {0u};
-
-            DeleterBase* deleter_base {nullptr};
+            ControlBlockBase* base {nullptr};
         };
     }
 }

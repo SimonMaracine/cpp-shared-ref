@@ -15,8 +15,8 @@ namespace sm {
 
         weak_ref(const shared_ref<T>& ref) noexcept
             : object_ptr(ref.object_ptr), block(ref.block) {
-            if (block != nullptr) {
-                block->weak_count++;
+            if (block) {
+                block.base->weak_count++;
             }
         }
 
@@ -28,15 +28,15 @@ namespace sm {
             destroy_this();
 
             object_ptr = nullptr;
-            block = nullptr;
+            block.base = nullptr;
 
             return *this;
         }
 
         weak_ref(const weak_ref& other) noexcept
             : object_ptr(other.object_ptr), block(other.block) {
-            if (block != nullptr) {
-                block->weak_count++;
+            if (block) {
+                block.base->weak_count++;
             }
         }
 
@@ -46,8 +46,8 @@ namespace sm {
             object_ptr = other.object_ptr;
             block = other.block;
 
-            if (block != nullptr) {
-                block->weak_count++;
+            if (block) {
+                block.base->weak_count++;
             }
 
             return *this;
@@ -56,7 +56,7 @@ namespace sm {
         weak_ref(weak_ref&& other) noexcept
             : object_ptr(other.object_ptr), block(other.block) {
             other.object_ptr = nullptr;
-            other.block = nullptr;
+            other.block.base = nullptr;
         }
 
         weak_ref<T>& operator=(weak_ref&& other) noexcept {
@@ -66,17 +66,17 @@ namespace sm {
             block = other.block;
 
             other.object_ptr = nullptr;
-            other.block = nullptr;
+            other.block.base = nullptr;
 
             return *this;
         }
 
         std::size_t use_count() const noexcept {
-            if (block == nullptr) {
+            if (!block) {
                 return 0u;
             }
 
-            return block->strong_count;
+            return block.base->strong_count;
         }
 
         bool expired() const noexcept {
@@ -91,7 +91,7 @@ namespace sm {
                 ref.block = block;
 
                 // Increment the reference count, as we just created a new strong reference
-                block->strong_count++;
+                block.base->strong_count++;
             }
 
             return ref;
@@ -101,7 +101,7 @@ namespace sm {
             destroy_this();
 
             object_ptr = nullptr;
-            block = nullptr;
+            block.base = nullptr;
         }
 
         void swap(weak_ref& other) noexcept {
@@ -110,18 +110,17 @@ namespace sm {
         }
     private:
         void destroy_this() noexcept {
-            if (block == nullptr) {
+            if (!block) {
                 return;
             }
 
-            if (--block->weak_count == 0u && block->strong_count == 0u) {
-                delete block;
-                block = nullptr;
+            if (--block.base->weak_count == 0u && block.base->strong_count == 0u) {
+                block.destroy();
             }
         }
 
         T* object_ptr {nullptr};
-        internal::ControlBlock* block {nullptr};
+        internal::ControlBlockWrapper block;
     };
 }
 
