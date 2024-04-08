@@ -48,12 +48,20 @@ namespace sm {
 
             template<typename T>
             ControlBlockWrapper(T* ptr) {
-                base = new ControlBlock(ptr, DefaultDeleter<T>());
+                try {
+                    base = new ControlBlock(ptr, DefaultDeleter<T>());
+                } catch (...) {
+                    delete ptr;
+                }
             }
 
             template<typename T, typename Deleter>
             ControlBlockWrapper(T* ptr, Deleter deleter) {
-                base = new ControlBlock(ptr, deleter);
+                try {
+                    base = new ControlBlock(ptr, deleter);
+                } catch (...) {
+                    deleter(ptr);
+                }
             }
 
             void destroy() noexcept {
