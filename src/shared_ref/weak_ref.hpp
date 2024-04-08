@@ -90,7 +90,7 @@ namespace sm {
                 ref.object_ptr = object_ptr;
                 ref.block = block;
 
-                // Increment the reference count, as we just created a new strong reference
+                // We just created a new strong reference
                 block.base->strong_count++;
             }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <utility>
 #include <typeinfo>
 
 namespace sm {
@@ -25,7 +26,7 @@ namespace sm {
         class ControlBlock : public ControlBlockBase {
         public:
             ControlBlock(T* ptr, Deleter deleter)
-                : ptr(ptr), deleter(deleter) {}
+                : ptr(ptr), deleter(std::move(deleter)) {}
 
             void destroy() const noexcept override {
                 deleter(ptr);
@@ -58,7 +59,7 @@ namespace sm {
             template<typename T, typename Deleter>
             ControlBlockWrapper(T* ptr, Deleter deleter) {
                 try {
-                    base = new ControlBlock(ptr, deleter);
+                    base = new ControlBlock(ptr, std::move(deleter));  // Safe to move here
                 } catch (...) {
                     deleter(ptr);
                 }

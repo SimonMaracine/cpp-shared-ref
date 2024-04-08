@@ -24,11 +24,11 @@ namespace sm {
 
         template<typename U, typename Deleter>
         shared_ref(U* ptr, Deleter deleter)
-            : object_ptr(ptr), block(ptr, deleter) {}
+            : object_ptr(ptr), block(ptr, std::move(deleter)) {}
 
         template<typename Deleter>
         shared_ref(std::nullptr_t, Deleter deleter)
-            : block(static_cast<T*>(nullptr), deleter) {}
+            : block(static_cast<T*>(nullptr), std::move(deleter)) {}
 
         // Constructor used usually by casts
         template<typename U>
@@ -184,7 +184,7 @@ namespace sm {
             destroy_this();
 
             object_ptr = ptr;
-            block = internal::ControlBlockWrapper(ptr, deleter);
+            block = internal::ControlBlockWrapper(ptr, std::move(deleter));
         }
 
         void swap(shared_ref& other) noexcept {
