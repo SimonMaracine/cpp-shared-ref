@@ -30,7 +30,8 @@ namespace sm {
         shared_ref(std::nullptr_t, Deleter deleter)
             : block(static_cast<T*>(nullptr), std::move(deleter)) {}
 
-        // Constructor used usually by casts
+        // Aliasing constructor
+
         template<typename U>
         shared_ref(const shared_ref<U>& other, T* ptr) noexcept
             : object_ptr(ptr), block(other.block) {

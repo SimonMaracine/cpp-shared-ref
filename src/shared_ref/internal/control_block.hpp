@@ -6,13 +6,6 @@
 
 namespace sm {
     namespace internal {
-        template<typename T>
-        struct DefaultDeleter {
-            void operator()(T* ptr) const noexcept {
-                delete ptr;
-            }
-        };
-
         struct ControlBlockBase {
             virtual ~ControlBlockBase() noexcept = default;
             virtual void destroy() const noexcept = 0;
@@ -23,9 +16,9 @@ namespace sm {
         };
 
         template<typename T, typename Deleter>
-        class ControlBlock : public ControlBlockBase {
+        class ControlBlockDeleter : public ControlBlockBase {
         public:
-            ControlBlock(T* ptr, Deleter deleter)
+            ControlBlockDeleter(T* ptr, Deleter deleter)
                 : ptr(ptr), deleter(std::move(deleter)) {}
 
             void destroy() const noexcept override {
@@ -34,7 +27,7 @@ namespace sm {
 
             void* get_deleter(const std::type_info& ti) noexcept override {
                 if (ti == typeid(Deleter)) {
-                    return &deleter;  // TODO GCC uses addressof
+                    return &deleter;  // TODO GCC uses addressof; Deleter must not overload the ampersand operator
                 } else {
                     return nullptr;
                 }
@@ -44,13 +37,30 @@ namespace sm {
             Deleter deleter;
         };
 
+        template<typename T>
+        class ControlBlock : public ControlBlockBase {
+        public:
+            ControlBlock(T* ptr)
+                : ptr(ptr) {}
+
+            void destroy() const noexcept override {
+                delete ptr;
+            }
+
+            void* get_deleter(const std::type_info&) noexcept override {
+                return nullptr;
+            }
+        private:
+            T* ptr {nullptr};
+        };
+
         struct ControlBlockWrapper {
             ControlBlockWrapper() noexcept = default;
 
             template<typename T>
             ControlBlockWrapper(T* ptr) {
                 try {
-                    base = new ControlBlock(ptr, DefaultDeleter<T>());
+                    base = new ControlBlock(ptr);
                 } catch (...) {
                     delete ptr;
                 }
@@ -59,7 +69,7 @@ namespace sm {
             template<typename T, typename Deleter>
             ControlBlockWrapper(T* ptr, Deleter deleter) {
                 try {
-                    base = new ControlBlock(ptr, std::move(deleter));  // Safe to move here
+                    base = new ControlBlockDeleter(ptr, std::move(deleter));  // Safe to move here
                 } catch (...) {
                     deleter(ptr);
                 }
