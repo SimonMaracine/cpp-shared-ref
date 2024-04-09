@@ -18,7 +18,7 @@ namespace sm {
         template<typename T, typename Deleter>
         class ControlBlockDeleter : public ControlBlockBase {
         public:
-            ControlBlockDeleter(T* ptr, Deleter deleter)
+            ControlBlockDeleter(T* ptr, Deleter deleter) noexcept
                 : ptr(ptr), deleter(std::move(deleter)) {}
 
             void destroy() const noexcept override {
@@ -40,7 +40,7 @@ namespace sm {
         template<typename T>
         class ControlBlock : public ControlBlockBase {
         public:
-            ControlBlock(T* ptr)
+            ControlBlock(T* ptr) noexcept
                 : ptr(ptr) {}
 
             void destroy() const noexcept override {
@@ -58,7 +58,7 @@ namespace sm {
             ControlBlockWrapper() noexcept = default;
 
             template<typename T>
-            ControlBlockWrapper(T* ptr) {
+            ControlBlockWrapper(T* ptr) noexcept {
                 try {
                     base = new ControlBlock(ptr);
                 } catch (...) {
@@ -67,7 +67,7 @@ namespace sm {
             }
 
             template<typename T, typename Deleter>
-            ControlBlockWrapper(T* ptr, Deleter deleter) {
+            ControlBlockWrapper(T* ptr, Deleter deleter) noexcept {
                 try {
                     base = new ControlBlockDeleter(ptr, std::move(deleter));  // Safe to move here
                 } catch (...) {
