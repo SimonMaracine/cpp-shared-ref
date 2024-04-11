@@ -434,3 +434,20 @@ TEST(shared_ref, Unique) {
 
     ASSERT_TRUE(p.unique());
 }
+
+TEST(shared_ref, AliasingConstructor) {
+    sm::shared_ref<char> p;
+
+    {
+        sm::shared_ref<Foo> p2 {sm::make_shared<Foo>()};
+
+        p = sm::shared_ref<char>(p2, &p2->c);
+
+        ASSERT_EQ(p2->bar(), 30);
+        ASSERT_EQ(*p, 'S');
+    }
+
+    ASSERT_TRUE(p);
+    ASSERT_EQ(p.use_count(), 1u);
+    ASSERT_EQ(*p, 'S');
+}

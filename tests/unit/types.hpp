@@ -60,4 +60,6 @@ struct Foo {
     int bar() {
         return 30;
     }
+
+    char c {'S'};
 };
