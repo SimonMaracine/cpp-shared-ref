@@ -20,11 +20,11 @@ namespace sm {
 
         template<typename U>
         explicit shared_ref(U* ptr)
-            : object_ptr(ptr), block(ptr) {}
+            : ptr(ptr), block(ptr) {}
 
         template<typename U, typename Deleter>
         shared_ref(U* ptr, Deleter deleter)
-            : object_ptr(ptr), block(ptr, std::move(deleter)) {}
+            : ptr(ptr), block(ptr, std::move(deleter)) {}
 
         template<typename Deleter>
         shared_ref(std::nullptr_t, Deleter deleter)
@@ -34,7 +34,7 @@ namespace sm {
 
         template<typename U>
         shared_ref(const shared_ref<U>& other, T* ptr) noexcept
-            : object_ptr(ptr), block(other.block) {
+            : ptr(ptr), block(other.block) {
             if (block.base) {
                 block.base->strong_count++;
             }
@@ -47,7 +47,7 @@ namespace sm {
         shared_ref& operator=(std::nullptr_t) noexcept {
             destroy_this();
 
-            object_ptr = nullptr;
+            ptr = nullptr;
             block.base = nullptr;
 
             return *this;
@@ -56,7 +56,7 @@ namespace sm {
         // Copy constructors
 
         shared_ref(const shared_ref& other) noexcept
-            : object_ptr(other.object_ptr), block(other.block) {
+            : ptr(other.ptr), block(other.block) {
             if (block) {
                 block.base->strong_count++;
             }
@@ -64,7 +64,7 @@ namespace sm {
 
         template<typename U>
         shared_ref(const shared_ref<U>& other) noexcept
-            : object_ptr(other.object_ptr), block(other.block) {
+            : ptr(other.ptr), block(other.block) {
             if (block) {
                 block.base->strong_count++;
             }
@@ -75,7 +75,7 @@ namespace sm {
         shared_ref& operator=(const shared_ref& other) noexcept {
             destroy_this();
 
-            object_ptr = other.object_ptr;
+            ptr = other.ptr;
             block = other.block;
 
             if (block) {
@@ -89,7 +89,7 @@ namespace sm {
         shared_ref& operator=(const shared_ref<U>& other) noexcept {
             destroy_this();
 
-            object_ptr = other.object_ptr;
+            ptr = other.ptr;
             block = other.block;
 
             if (block) {
@@ -102,15 +102,15 @@ namespace sm {
         // Move constructors
 
         shared_ref(shared_ref&& other) noexcept
-            : object_ptr(other.object_ptr), block(other.block) {
-            other.object_ptr = nullptr;
+            : ptr(other.ptr), block(other.block) {
+            other.ptr = nullptr;
             other.block.base = nullptr;
         }
 
         template<typename U>
         shared_ref(shared_ref<U>&& other) noexcept
-            : object_ptr(other.object_ptr), block(other.block) {
-            other.object_ptr = nullptr;
+            : ptr(other.ptr), block(other.block) {
+            other.ptr = nullptr;
             other.block.base = nullptr;
         }
 
@@ -119,10 +119,10 @@ namespace sm {
         shared_ref& operator=(shared_ref&& other) noexcept {
             destroy_this();
 
-            object_ptr = other.object_ptr;
+            ptr = other.ptr;
             block = other.block;
 
-            other.object_ptr = nullptr;
+            other.ptr = nullptr;
             other.block.base = nullptr;
 
             return *this;
@@ -132,25 +132,25 @@ namespace sm {
         shared_ref& operator=(shared_ref<U>&& other) noexcept {
             destroy_this();
 
-            object_ptr = other.object_ptr;
+            ptr = other.ptr;
             block = other.block;
 
-            other.object_ptr = nullptr;
+            other.ptr = nullptr;
             other.block.base = nullptr;
 
             return *this;
         }
 
         T* get() const noexcept {
-            return object_ptr;
+            return ptr;
         }
 
         T& operator*() const noexcept {
-            return *object_ptr;
+            return *ptr;
         }
 
         T* operator->() const noexcept {
-            return object_ptr;
+            return ptr;
         }
 
         std::size_t use_count() const noexcept {
@@ -166,13 +166,13 @@ namespace sm {
         }
 
         operator bool() const noexcept {
-            return object_ptr != nullptr;
+            return ptr != nullptr;
         }
 
         void reset() noexcept {
             destroy_this();
 
-            object_ptr = nullptr;
+            ptr = nullptr;
             block.base = nullptr;
         }
 
@@ -180,7 +180,7 @@ namespace sm {
         void reset(U* ptr) {
             destroy_this();
 
-            object_ptr = ptr;
+            this->ptr = ptr;
             block = internal::ControlBlockWrapper(ptr);
         }
 
@@ -188,12 +188,12 @@ namespace sm {
         void reset(U* ptr, Deleter deleter) {
             destroy_this();
 
-            object_ptr = ptr;
+            this->ptr = ptr;
             block = internal::ControlBlockWrapper(ptr, std::move(deleter));
         }
 
         void swap(shared_ref& other) noexcept {
-            std::swap(object_ptr, other.object_ptr);
+            std::swap(ptr, other.ptr);
             std::swap(block, other.block);
         }
     private:
@@ -205,7 +205,7 @@ namespace sm {
             // Need to reset the pointers when they are deleted
 
             if (--block.base->strong_count == 0u) {
-                object_ptr = nullptr;
+                ptr = nullptr;
                 block.base->destroy();
 
                 if (block.base->weak_count == 0u) {
@@ -214,7 +214,7 @@ namespace sm {
             }
         }
 
-        T* object_ptr {nullptr};
+        T* ptr {nullptr};
         internal::ControlBlockWrapper block;
 
         template<typename U, typename... Args>
@@ -226,7 +226,7 @@ namespace sm {
         template<typename U>
         friend class weak_ref;
 
-        // This is needed by polymorphism
+        // Needed by polymorphism
         template<typename U>
         friend class shared_ref;
     };
@@ -235,8 +235,8 @@ namespace sm {
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
 
-        ref.object_ptr = new T(std::forward<Args>(args)...);
-        ref.block = internal::ControlBlockWrapper(ref.object_ptr);
+        ref.ptr = new T(std::forward<Args>(args)...);
+        ref.block = internal::ControlBlockWrapper(ref.ptr);
 
         return ref;
     }

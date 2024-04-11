@@ -14,7 +14,7 @@ namespace sm {
         constexpr weak_ref(std::nullptr_t) noexcept {}
 
         weak_ref(const shared_ref<T>& ref) noexcept
-            : object_ptr(ref.object_ptr), block(ref.block) {
+            : ptr(ref.ptr), block(ref.block) {
             if (block) {
                 block.base->weak_count++;
             }
@@ -27,14 +27,14 @@ namespace sm {
         weak_ref& operator=(std::nullptr_t) noexcept {
             destroy_this();
 
-            object_ptr = nullptr;
+            ptr = nullptr;
             block.base = nullptr;
 
             return *this;
         }
 
         weak_ref(const weak_ref& other) noexcept
-            : object_ptr(other.object_ptr), block(other.block) {
+            : ptr(other.ptr), block(other.block) {
             if (block) {
                 block.base->weak_count++;
             }
@@ -43,7 +43,7 @@ namespace sm {
         weak_ref<T>& operator=(const weak_ref& other) noexcept {
             destroy_this();
 
-            object_ptr = other.object_ptr;
+            ptr = other.ptr;
             block = other.block;
 
             if (block) {
@@ -54,18 +54,18 @@ namespace sm {
         }
 
         weak_ref(weak_ref&& other) noexcept
-            : object_ptr(other.object_ptr), block(other.block) {
-            other.object_ptr = nullptr;
+            : ptr(other.ptr), block(other.block) {
+            other.ptr = nullptr;
             other.block.base = nullptr;
         }
 
         weak_ref<T>& operator=(weak_ref&& other) noexcept {
             destroy_this();
 
-            object_ptr = other.object_ptr;
+            ptr = other.ptr;
             block = other.block;
 
-            other.object_ptr = nullptr;
+            other.ptr = nullptr;
             other.block.base = nullptr;
 
             return *this;
@@ -87,7 +87,7 @@ namespace sm {
             shared_ref<T> ref;
 
             if (!expired()) {
-                ref.object_ptr = object_ptr;
+                ref.ptr = ptr;
                 ref.block = block;
 
                 // We just created a new strong reference
@@ -100,12 +100,12 @@ namespace sm {
         void reset() noexcept {
             destroy_this();
 
-            object_ptr = nullptr;
+            ptr = nullptr;
             block.base = nullptr;
         }
 
         void swap(weak_ref& other) noexcept {
-            std::swap(object_ptr, other.object_ptr);
+            std::swap(ptr, other.ptr);
             std::swap(block, other.block);
         }
     private:
@@ -119,7 +119,7 @@ namespace sm {
             }
         }
 
-        T* object_ptr {nullptr};
+        T* ptr {nullptr};
         internal::ControlBlockWrapper block;
     };
 }

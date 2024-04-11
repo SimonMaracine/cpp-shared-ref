@@ -19,10 +19,10 @@ namespace sm {
         class ControlBlockDeleter : public ControlBlockBase {
         public:
             ControlBlockDeleter(T* ptr, Deleter deleter) noexcept
-                : ptr(ptr), deleter(std::move(deleter)) {}
+                : object_ptr(ptr), deleter(std::move(deleter)) {}
 
             void destroy() const noexcept override {
-                deleter(ptr);
+                deleter(object_ptr);
             }
 
             void* get_deleter(const std::type_info& ti) noexcept override {
@@ -33,7 +33,7 @@ namespace sm {
                 }
             }
         private:
-            T* ptr {nullptr};
+            T* object_ptr {nullptr};
             Deleter deleter;
         };
 
@@ -41,17 +41,17 @@ namespace sm {
         class ControlBlock : public ControlBlockBase {
         public:
             ControlBlock(T* ptr) noexcept
-                : ptr(ptr) {}
+                : object_ptr(ptr) {}
 
             void destroy() const noexcept override {
-                delete ptr;
+                delete object_ptr;
             }
 
             void* get_deleter(const std::type_info&) noexcept override {
                 return nullptr;
             }
         private:
-            T* ptr {nullptr};
+            T* object_ptr {nullptr};
         };
 
         struct ControlBlockWrapper {
