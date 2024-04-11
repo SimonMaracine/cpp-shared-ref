@@ -58,20 +58,22 @@ namespace sm {
             ControlBlockWrapper() noexcept = default;
 
             template<typename T>
-            ControlBlockWrapper(T* ptr) noexcept {
+            ControlBlockWrapper(T* ptr) {
                 try {
                     base = new ControlBlock(ptr);
                 } catch (...) {
                     delete ptr;
+                    throw;
                 }
             }
 
             template<typename T, typename Deleter>
-            ControlBlockWrapper(T* ptr, Deleter deleter) noexcept {
+            ControlBlockWrapper(T* ptr, Deleter deleter) {
                 try {
                     base = new ControlBlockDeleter(ptr, std::move(deleter));  // Safe to move here
                 } catch (...) {
                     deleter(ptr);
+                    throw;
                 }
             }
 
