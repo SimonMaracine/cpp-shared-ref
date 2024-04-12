@@ -20,7 +20,7 @@ an incomplete list of missing features of my version or differences between the 
 - Deprecated features as of `C++17` are missing (for good)
 
 The code is unit-tested. Almost every public functionality is tested in its own unit. Also Valgrind is
-regularly used in development to check for memory bugs. Tested on `GCC 13.2`.
+regularly used in development to check for memory bugs. Tested compilation on `GCC 13.2` and `MSVC 19.39`.
 
 If you need a specific missing feature, or need this library to work on lower versions of C++, feel free to open
 up an issue.
