@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <utility>
 #include <ostream>
+#include <functional>  // std::hash
 
 #include "internal/control_block.hpp"
 

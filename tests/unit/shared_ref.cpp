@@ -2,6 +2,7 @@
 #include <cstring>
 #include <utility>
 #include <cstdlib>
+#include <functional>
 
 #include <gtest/gtest.h>
 #include <shared_ref/shared_ref.hpp>
@@ -450,4 +451,14 @@ TEST(shared_ref, AliasingConstructor) {
     ASSERT_TRUE(p);
     ASSERT_EQ(p.use_count(), 1u);
     ASSERT_EQ(*p, 'S');
+}
+
+TEST(shared_ref, Hash) {
+    int* pi {new int(21)};
+
+    const std::size_t hash {std::hash<int*>()(pi)};
+
+    sm::shared_ref<int> p {pi};
+
+    ASSERT_EQ(hash, std::hash<sm::shared_ref<int>>()(p));
 }
