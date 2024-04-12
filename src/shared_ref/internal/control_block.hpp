@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <utility>
 #include <typeinfo>
+#include <memory>  // std::addressof
 
 namespace sm {
     namespace internal {
@@ -27,7 +28,7 @@ namespace sm {
 
             void* get_deleter(const std::type_info& ti) noexcept override {
                 if (ti == typeid(Deleter)) {
-                    return &deleter;  // TODO GCC uses addressof; Deleter must not overload the ampersand operator
+                    return std::addressof(deleter);
                 } else {
                     return nullptr;
                 }
@@ -77,12 +78,13 @@ namespace sm {
                 }
             }
 
+            // Helper methods
+
             void destroy() noexcept {
                 delete base;
                 base = nullptr;
             }
 
-            // Helper method
             operator bool() const noexcept {
                 return base != nullptr;
             }

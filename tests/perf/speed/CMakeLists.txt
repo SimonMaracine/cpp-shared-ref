@@ -4,7 +4,7 @@ add_executable(test_speed
     "main.cpp"
 )
 
-target_link_libraries(test_speed PRIVATE shared_ref)
+target_link_libraries(test_speed PRIVATE cpp_shared_ref)
 
 target_compile_options(test_speed PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-O2")
 

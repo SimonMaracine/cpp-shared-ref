@@ -6,7 +6,7 @@ add_executable(test_shared_ref
     "shared_ref.cpp"
 )
 
-target_link_libraries(test_shared_ref PRIVATE shared_ref)
+target_link_libraries(test_shared_ref PRIVATE cpp_shared_ref)
 
 target_compile_options(test_shared_ref PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-g" "-fno-inline")
 

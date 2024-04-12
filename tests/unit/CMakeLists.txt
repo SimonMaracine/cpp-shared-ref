@@ -11,7 +11,7 @@ add_executable(test_unit
     "weak_ref.cpp"
 )
 
-target_link_libraries(test_unit PRIVATE shared_ref GTest::gtest_main)
+target_link_libraries(test_unit PRIVATE cpp_shared_ref GTest::gtest_main)
 
 target_compile_options(test_unit PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-fno-elide-constructors")
 
