@@ -36,7 +36,7 @@ namespace sm {
         template<typename U>
         shared_ref(const shared_ref<U>& other, T* ptr) noexcept
             : ptr(ptr), block(other.block) {
-            if (block.base) {
+            if (block) {
                 block.base->strong_count++;
             }
         }
@@ -49,7 +49,7 @@ namespace sm {
             destroy_this();
 
             ptr = nullptr;
-            block.base = nullptr;
+            block = {};
 
             return *this;
         }
@@ -105,14 +105,14 @@ namespace sm {
         shared_ref(shared_ref&& other) noexcept
             : ptr(other.ptr), block(other.block) {
             other.ptr = nullptr;
-            other.block.base = nullptr;
+            other.block = {};
         }
 
         template<typename U>
         shared_ref(shared_ref<U>&& other) noexcept
             : ptr(other.ptr), block(other.block) {
             other.ptr = nullptr;
-            other.block.base = nullptr;
+            other.block = {};
         }
 
         // Move assignments
@@ -124,7 +124,7 @@ namespace sm {
             block = other.block;
 
             other.ptr = nullptr;
-            other.block.base = nullptr;
+            other.block = {};
 
             return *this;
         }
@@ -137,7 +137,7 @@ namespace sm {
             block = other.block;
 
             other.ptr = nullptr;
-            other.block.base = nullptr;
+            other.block = {};
 
             return *this;
         }
@@ -174,7 +174,7 @@ namespace sm {
             destroy_this();
 
             ptr = nullptr;
-            block.base = nullptr;
+            block = {};
         }
 
         template<typename U>

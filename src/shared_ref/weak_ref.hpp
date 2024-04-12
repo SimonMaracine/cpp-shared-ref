@@ -28,7 +28,7 @@ namespace sm {
             destroy_this();
 
             ptr = nullptr;
-            block.base = nullptr;
+            block = {};
 
             return *this;
         }
@@ -56,7 +56,7 @@ namespace sm {
         weak_ref(weak_ref&& other) noexcept
             : ptr(other.ptr), block(other.block) {
             other.ptr = nullptr;
-            other.block.base = nullptr;
+            other.block = {};
         }
 
         weak_ref<T>& operator=(weak_ref&& other) noexcept {
@@ -66,7 +66,7 @@ namespace sm {
             block = other.block;
 
             other.ptr = nullptr;
-            other.block.base = nullptr;
+            other.block = {};
 
             return *this;
         }
@@ -101,7 +101,7 @@ namespace sm {
             destroy_this();
 
             ptr = nullptr;
-            block.base = nullptr;
+            block = {};
         }
 
         void swap(weak_ref& other) noexcept {

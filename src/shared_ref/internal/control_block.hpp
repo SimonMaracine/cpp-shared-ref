@@ -82,6 +82,7 @@ namespace sm {
                 base = nullptr;
             }
 
+            // Helper method
             operator bool() const noexcept {
                 return base != nullptr;
             }
