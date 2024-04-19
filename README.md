@@ -17,6 +17,7 @@ an incomplete list of missing features of my version or differences between the 
 - `make_shared` doesn't allocate object and control block at the same time
 - Missing a few `shared_ref` and `weak_ref` constructors
 - Missing `owner_before` methods
+- No support for -fno-exceptions
 - Deprecated features as of `C++17` are missing (for good)
 
 The code is unit-tested. Almost every public functionality is tested in its own unit. Also Valgrind is

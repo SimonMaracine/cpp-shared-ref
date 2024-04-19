@@ -5,6 +5,8 @@
 - allocator-aware
 - support for shared from this
 - support for casts
+- support for arrays
+- support for -fno-exceptions
 
 - profile shared_ref and shared_ptr and compare the performance
 - use valgrind to see allocations
