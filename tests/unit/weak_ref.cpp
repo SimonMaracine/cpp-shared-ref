@@ -209,3 +209,7 @@ TEST(weak_ref, Swap) {
     ASSERT_EQ(w2.use_count(), 2u);
     ASSERT_EQ(*w2.lock(), 30);
 }
+
+TEST(weak_ref, IncompleteType) {
+    sm::weak_ref<NonExisting> p;
+}

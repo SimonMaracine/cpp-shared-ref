@@ -41,8 +41,22 @@ namespace sm {
             return *this;
         }
 
+        // Reset this weak_ref and instead share ownership with a shared_ref
+        weak_ref& operator=(const shared_ref<T>& ref) noexcept {  // TODO polymorphism
+            destroy_this();
+
+            ptr = ref.ptr;
+            block = ref.block;
+
+            if (block) {
+                block.base->weak_count++;
+            }
+
+            return *this;
+        }
+
         // Copy constructor
-        // Construct a weak_ref that shares owenship with another weak_ref
+        // Construct a weak_ref that shares ownership with another weak_ref
         weak_ref(const weak_ref& other) noexcept  // TODO polymorphism
             : ptr(other.ptr), block(other.block) {
             if (block) {
@@ -51,7 +65,7 @@ namespace sm {
         }
 
         // Copy assignment
-        // Reset this weak_ref and instead share owenship with another weak_ref
+        // Reset this weak_ref and instead share ownership with another weak_ref
         weak_ref<T>& operator=(const weak_ref& other) noexcept {
             destroy_this();
 

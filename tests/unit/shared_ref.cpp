@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 #include <shared_ref/shared_ref.hpp>
+#include <shared_ref/weak_ref.hpp>
 
 #include "types.hpp"
 
@@ -461,4 +462,23 @@ TEST(shared_ref, Hash) {
     sm::shared_ref<int> p {pi};
 
     ASSERT_EQ(hash, std::hash<sm::shared_ref<int>>()(p));
+}
+
+TEST(shared_ref, MakeShared) {
+    int integer {21};
+
+    sm::weak_ref<NeedsDeletion> p;
+
+    {
+        sm::shared_ref<NeedsDeletion> p2 {sm::make_shared<NeedsDeletion>(&integer)};
+        p = p2;
+
+        ASSERT_EQ(integer, 21);
+    }
+
+    ASSERT_EQ(integer, 0);
+}
+
+TEST(shared_ref, IncompleteType) {
+    sm::shared_ref<NonExisting> p;
 }

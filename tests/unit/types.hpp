@@ -63,3 +63,17 @@ struct Foo {
 
     char c {'S'};
 };
+
+class NeedsDeletion {
+public:
+    NeedsDeletion(int* p)
+        : p(p) {}
+
+    ~NeedsDeletion() {
+        *p = 0;
+    }
+private:
+    int* p {nullptr};
+};
+
+struct NonExisting;
