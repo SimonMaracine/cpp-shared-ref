@@ -1,7 +1,7 @@
 #include <memory>
 
 int main() {
-#if 0
+#if 1
     std::shared_ptr<int> ptr {std::make_shared<int>(21)};
 #else
     std::shared_ptr<int> ptr {new int(21)};

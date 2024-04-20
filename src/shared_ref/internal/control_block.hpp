@@ -9,7 +9,7 @@ namespace sm {
     namespace internal {
         struct ControlBlockBase {
             virtual ~ControlBlockBase() noexcept = default;
-            virtual void destroy() const noexcept = 0;
+            virtual void dispose() const noexcept = 0;
             virtual void* get_deleter(const std::type_info& ti) noexcept = 0;
 
             std::size_t strong_count {1u};
@@ -17,12 +17,12 @@ namespace sm {
         };
 
         template<typename T, typename Deleter>
-        class ControlBlockDeleter : public ControlBlockBase {
+        class ControlBlockDeleter final : public ControlBlockBase {
         public:
             ControlBlockDeleter(T* ptr, Deleter deleter) noexcept
                 : object_ptr(ptr), deleter(std::move(deleter)) {}
 
-            void destroy() const noexcept override {
+            void dispose() const noexcept override {
                 deleter(object_ptr);
             }
 
@@ -34,17 +34,17 @@ namespace sm {
                 }
             }
         private:
-            T* object_ptr {nullptr};
+            T* object_ptr;
             Deleter deleter;
         };
 
         template<typename T>
-        class ControlBlock : public ControlBlockBase {
+        class ControlBlockPtr final : public ControlBlockBase {
         public:
-            ControlBlock(T* ptr) noexcept
+            explicit ControlBlockPtr(T* ptr) noexcept
                 : object_ptr(ptr) {}
 
-            void destroy() const noexcept override {
+            void dispose() const noexcept override {
                 delete object_ptr;
             }
 
@@ -52,30 +52,61 @@ namespace sm {
                 return nullptr;
             }
         private:
-            T* object_ptr {nullptr};
+            T* object_ptr;
         };
 
-        struct ControlBlockWrapper {
-            ControlBlockWrapper() noexcept = default;
+        struct MakeSharedTag {};
 
-            template<typename T>
-            ControlBlockWrapper(T* ptr) {
-                try {
-                    base = new ControlBlock(ptr);
-                } catch (...) {
-                    delete ptr;
-                    throw;
-                }
+        template<typename T>
+        class ControlBlockInPlace final : public ControlBlockBase {
+        public:
+            template<typename... Args>
+            ControlBlockInPlace(Args&&... args) noexcept
+                : object(std::forward<Args>(args)...) {}
+
+            void dispose() const noexcept override {
+                // FIXME
             }
 
+            void* get_deleter(const std::type_info&) noexcept override {
+                return nullptr;
+            }
+
+            T* get_ptr() noexcept {
+                return &object;
+            }
+        private:
+            T object;
+        };
+
+        struct ControlBlock final {
+            ControlBlock() noexcept = default;
+
             template<typename T, typename Deleter>
-            ControlBlockWrapper(T* ptr, Deleter deleter) {
+            ControlBlock(T* ptr, Deleter deleter) {
                 try {
                     base = new ControlBlockDeleter(ptr, std::move(deleter));  // Safe to move here
                 } catch (...) {
                     deleter(ptr);
                     throw;
                 }
+            }
+
+            template<typename T>
+            explicit ControlBlock(T* ptr) {
+                try {
+                    base = new ControlBlockPtr(ptr);
+                } catch (...) {
+                    delete ptr;
+                    throw;
+                }
+            }
+
+            template<typename T, typename... Args>
+            ControlBlock(T*& ptr, MakeSharedTag, Args&&... args) {
+                auto ctrl_block {new ControlBlockInPlace<T>(std::forward<Args>(args)...)};
+                ptr = ctrl_block->get_ptr();
+                base = ctrl_block;
             }
 
             // Helper methods

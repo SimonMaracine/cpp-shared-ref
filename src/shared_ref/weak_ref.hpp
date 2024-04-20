@@ -142,7 +142,7 @@ namespace sm {
         }
 
         T* ptr {nullptr};
-        internal::ControlBlockWrapper block;
+        internal::ControlBlock block;
     };
 }
 

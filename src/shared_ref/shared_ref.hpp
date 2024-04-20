@@ -212,7 +212,7 @@ namespace sm {
             destroy_this();
 
             this->ptr = ptr;
-            block = internal::ControlBlockWrapper(ptr);
+            block = internal::ControlBlock(ptr);
         }
 
         // Reset this shared_ref and instead manage an existing object created with new
@@ -223,7 +223,7 @@ namespace sm {
             destroy_this();
 
             this->ptr = ptr;
-            block = internal::ControlBlockWrapper(ptr, std::move(deleter));
+            block = internal::ControlBlock(ptr, std::move(deleter));
         }
 
         // Swap this shared_ref object with another one
@@ -239,7 +239,7 @@ namespace sm {
 
             if (--block.base->strong_count == 0u) {
                 ptr = nullptr;
-                block.base->destroy();
+                block.base->dispose();
 
                 if (block.base->weak_count == 0u) {
                     block.destroy();
@@ -248,7 +248,7 @@ namespace sm {
         }
 
         T* ptr {nullptr};
-        internal::ControlBlockWrapper block;
+        internal::ControlBlock block;
 
         template<typename U, typename... Args>
         friend shared_ref<U> make_shared(Args&&... args);
@@ -268,8 +268,12 @@ namespace sm {
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
 
+#if 0
         ref.ptr = new T(std::forward<Args>(args)...);  // TODO allocate object and control block at the same time
-        ref.block = internal::ControlBlockWrapper(ref.ptr);
+        ref.block = internal::ControlBlock(ref.ptr);
+#else
+        ref.block = internal::ControlBlock(ref.ptr, internal::MakeSharedTag(), std::forward<Args>(args)...);
+#endif
 
         return ref;
     }
