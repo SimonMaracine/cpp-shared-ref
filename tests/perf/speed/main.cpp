@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <memory>
 
-#include <shared_ref/shared_ref.hpp>
+#include <cpp_shared_ref/shared_ref.hpp>
 
 enum class Type {
     Ref,

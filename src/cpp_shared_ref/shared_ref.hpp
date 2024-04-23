@@ -21,13 +21,13 @@ namespace sm {
         // Construct an empty shared_ref
         constexpr shared_ref(std::nullptr_t) noexcept {}
 
-        // Construct a shared_ref from an existing object created with new
+        // Construct a shared_ref from an existing object created using new
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U>
         explicit shared_ref(U* ptr)
             : ptr(ptr), block(ptr) {}
 
-        // Construct a shared_ref from an existing object not created with new
+        // Construct a shared_ref from an existing object not created using new
         // Destroy the object with this deleter
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U, typename Deleter>
@@ -205,7 +205,7 @@ namespace sm {
             block = {};
         }
 
-        // Reset this shared_ref and instead manage an existing object created with new
+        // Reset this shared_ref and instead manage an existing object created using new
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U>
         void reset(U* ptr) {
@@ -215,7 +215,7 @@ namespace sm {
             block = internal::ControlBlock(ptr);
         }
 
-        // Reset this shared_ref and instead manage an existing object created with new
+        // Reset this shared_ref and instead manage an existing object created using new
         // Destroy the object with this deleter
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U, typename Deleter>
@@ -263,17 +263,11 @@ namespace sm {
         friend class shared_ref;
     };
 
-    // Construct a new shared_ref with new, with these arguments
+    // Construct a new shared_ref using new, with these arguments
     template<typename T, typename... Args>
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
-
-#if 0
-        ref.ptr = new T(std::forward<Args>(args)...);  // TODO allocate object and control block at the same time
-        ref.block = internal::ControlBlock(ref.ptr);
-#else
         ref.block = internal::ControlBlock(ref.ptr, internal::MakeSharedTag(), std::forward<Args>(args)...);
-#endif
 
         return ref;
     }

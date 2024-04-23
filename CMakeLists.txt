@@ -7,10 +7,10 @@ set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Variable used to control the build ty
 option(CPP_SHARED_REF_BUILD_TESTS "Turn this on to build test binaries" OFF)
 
 add_library(cpp_shared_ref INTERFACE
-    "src/shared_ref/internal/control_block.hpp"
-    "src/shared_ref/shared_ref.hpp"
-    "src/shared_ref/version.hpp"
-    "src/shared_ref/weak_ref.hpp"
+    "src/cpp_shared_ref/shared_ref.hpp"
+    "src/cpp_shared_ref/version.hpp"
+    "src/cpp_shared_ref/weak_ref.hpp"
+    "src/cpp_shared_ref/internal/control_block.hpp"
 )
 
 target_include_directories(cpp_shared_ref INTERFACE "src")
