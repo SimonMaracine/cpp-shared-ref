@@ -9,7 +9,7 @@ can be very useful in contexts outside of threading, in which atomicity is not n
 This is why I tried making my own version of `std::shared_ptr`.
 
 Right now, `shared_ref` doesn't fully conform with the `std::shared_ptr` specification of `C++17`. This is probably
-an incomplete list of missing features of my version or differences between the two:
+an incomplete list of missing features from my version or differences between the two:
 
 - Not allocator-aware
 - No support for arrays

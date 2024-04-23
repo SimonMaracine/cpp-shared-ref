@@ -61,11 +61,12 @@ namespace sm {
         class ControlBlockInPlace final : public ControlBlockBase {
         public:
             template<typename... Args>
-            ControlBlockInPlace(Args&&... args) noexcept
-                : object(std::forward<Args>(args)...) {}
+            ControlBlockInPlace(Args&&... args) noexcept {
+                ::new (&impl.object) T(std::forward<Args>(args)...);
+            }
 
             void dispose() const noexcept override {
-                // FIXME
+                impl.object.~T();
             }
 
             void* get_deleter(const std::type_info&) noexcept override {
@@ -73,10 +74,15 @@ namespace sm {
             }
 
             T* get_ptr() noexcept {
-                return &object;
+                return &impl.object;
             }
         private:
-            T object;
+            union Impl {
+                Impl() {}
+                ~Impl() {}
+
+                T object;
+            } impl;
         };
 
         struct ControlBlock final {
