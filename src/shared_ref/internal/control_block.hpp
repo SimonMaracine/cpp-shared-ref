@@ -61,7 +61,7 @@ namespace sm {
         class ControlBlockInPlace final : public ControlBlockBase {
         public:
             template<typename... Args>
-            ControlBlockInPlace(Args&&... args) noexcept {
+            ControlBlockInPlace(Args&&... args) {
                 ::new (&impl.object) T(std::forward<Args>(args)...);
             }
 

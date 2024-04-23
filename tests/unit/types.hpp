@@ -77,3 +77,15 @@ private:
 };
 
 struct NonExisting;
+
+class Raii {
+public:
+    Raii()
+        : p(new int(21)) {}
+
+    ~Raii() {
+        delete p;
+    }
+private:
+    int* p {nullptr};
+};

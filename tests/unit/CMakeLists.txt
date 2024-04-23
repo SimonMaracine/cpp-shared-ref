@@ -23,3 +23,8 @@ endif()
 
 target_compile_features(test_unit PRIVATE cxx_std_17)
 set_target_properties(test_unit PROPERTIES CXX_EXTENSIONS OFF)
+
+if(UNIX AND CPP_SHARED_REF_ASAN)
+    target_compile_options(test_unit PRIVATE "-fsanitize=address" "-fsanitize=undefined" "-g" "-fno-omit-frame-pointer" "-libasan")
+    target_link_options(test_unit PRIVATE "-fsanitize=address" "-fsanitize=undefined")
+endif()

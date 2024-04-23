@@ -465,18 +465,25 @@ TEST(shared_ref, Hash) {
 }
 
 TEST(shared_ref, MakeShared) {
-    int integer {21};
-
-    sm::weak_ref<NeedsDeletion> p;
-
     {
-        sm::shared_ref<NeedsDeletion> p2 {sm::make_shared<NeedsDeletion>(&integer)};
-        p = p2;
+        int integer {21};
 
-        ASSERT_EQ(integer, 21);
+        sm::weak_ref<NeedsDeletion> p;
+
+        {
+            sm::shared_ref<NeedsDeletion> p2 {sm::make_shared<NeedsDeletion>(&integer)};
+            p = p2;
+
+            ASSERT_EQ(integer, 21);
+        }
+
+        ASSERT_EQ(integer, 0);
     }
 
-    ASSERT_EQ(integer, 0);
+    {
+        sm::shared_ref<Raii> p {sm::make_shared<Raii>()};
+        // Test with Valgrind
+    }
 }
 
 TEST(shared_ref, IncompleteType) {
