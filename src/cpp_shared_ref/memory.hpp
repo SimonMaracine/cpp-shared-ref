@@ -9,9 +9,6 @@
 #include "internal/control_block.hpp"
 
 namespace sm {
-    template<typename T>
-    class weak_ref;
-
     // Object thrown by the constructors of shared_ref that take weak_ref as the argument, when the weak_ref refers to an already deleted object
     struct bad_weak_ref : public std::exception {
         bad_weak_ref() noexcept = default;
@@ -21,6 +18,11 @@ namespace sm {
             return "Shared pointer construction failed, as weak pointer is empty";
         }
     };
+}
+
+namespace sm {
+    template<typename T>
+    class weak_ref;
 
     // Smart pointer with reference-counting copy semantics
     template<typename T>
