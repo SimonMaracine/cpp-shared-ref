@@ -490,15 +490,26 @@ TEST(shared_ref, IncompleteType) {
 }
 
 TEST(shared_ref, ConstructorWeakRef) {
-    sm::shared_ref<int> p {new int(42)};
-    sm::weak_ref<int> w {p};
+    {
+        sm::shared_ref<int> p {new int(21)};
+        sm::weak_ref<int> w {p};
 
-    p.reset();
+        p.reset();
 
-    ASSERT_THROW(
-        {
-            sm::shared_ref<int> p2 {w};
-        },
-        sm::bad_weak_ref
-    );
+        ASSERT_THROW(
+            {
+                sm::shared_ref<int> p2 {w};
+            },
+            sm::bad_weak_ref
+        );
+    }
+
+    {
+        sm::shared_ref<int> p {new int(21)};
+        sm::weak_ref<int> w {p};
+
+        sm::shared_ref<int> p2 {w};
+
+        ASSERT_EQ(p2.use_count(), 2u);
+    }
 }

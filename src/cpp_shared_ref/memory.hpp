@@ -62,7 +62,7 @@ namespace sm {
             }
         }
 
-        // Construct a shared_ref that shares ownership with with a weak_ref
+        // Construct a shared_ref that shares ownership with a weak_ref
         // Throw an exception, if the weak_ref is empty
         template<typename U>
         explicit shared_ref(const weak_ref<U>& ref) {
@@ -73,6 +73,7 @@ namespace sm {
             ptr = ref.ptr;
             block = ref.block;
 
+            // We just created a new strong reference
             block.base-> strong_count++;
         }
 
