@@ -110,9 +110,9 @@ namespace sm {
 
             template<typename T, typename... Args>
             ControlBlock(T*& ptr, MakeSharedTag, Args&&... args) {
-                auto ctrl_block {new ControlBlockInPlace<T>(std::forward<Args>(args)...)};
-                ptr = ctrl_block->get_ptr();
-                base = ctrl_block;
+                auto block {new ControlBlockInPlace<T>(std::forward<Args>(args)...)};
+                ptr = block->get_ptr();
+                base = block;
             }
 
             // Helper methods

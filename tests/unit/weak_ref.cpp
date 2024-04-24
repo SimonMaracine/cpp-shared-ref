@@ -1,8 +1,7 @@
 #include <utility>
 
 #include <gtest/gtest.h>
-#include <cpp_shared_ref/shared_ref.hpp>
-#include <cpp_shared_ref/weak_ref.hpp>
+#include <cpp_shared_ref/memory.hpp>
 
 #include "types.hpp"
 

@@ -5,8 +5,7 @@
 #include <functional>
 
 #include <gtest/gtest.h>
-#include <cpp_shared_ref/shared_ref.hpp>
-#include <cpp_shared_ref/weak_ref.hpp>
+#include <cpp_shared_ref/memory.hpp>
 
 #include "types.hpp"
 
@@ -488,4 +487,18 @@ TEST(shared_ref, MakeShared) {
 
 TEST(shared_ref, IncompleteType) {
     sm::shared_ref<NonExisting> p;
+}
+
+TEST(shared_ref, ConstructorWeakRef) {
+    sm::shared_ref<int> p {new int(42)};
+    sm::weak_ref<int> w {p};
+
+    p.reset();
+
+    ASSERT_THROW(
+        {
+            sm::shared_ref<int> p2 {w};
+        },
+        sm::bad_weak_ref
+    );
 }

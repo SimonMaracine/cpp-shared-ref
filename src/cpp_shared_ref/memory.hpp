@@ -4,12 +4,23 @@
 #include <utility>
 #include <iosfwd>  // std::basic_ostream
 #include <memory>  // std::unique_ptr, std::hash
+#include <exception>
 
 #include "internal/control_block.hpp"
 
 namespace sm {
     template<typename T>
     class weak_ref;
+
+    // Object thrown by the constructors of shared_ref that take weak_ref as the argument, when the weak_ref refers to an already deleted object
+    struct bad_weak_ref : public std::exception {
+        bad_weak_ref() noexcept = default;
+        bad_weak_ref(const bad_weak_ref&) noexcept = default;
+
+        const char* what() const noexcept override {
+            return "Shared pointer construction failed, as weak pointer is empty";
+        }
+    };
 
     // Smart pointer with reference-counting copy semantics
     template<typename T>
@@ -47,6 +58,20 @@ namespace sm {
             if (block) {
                 block.base->strong_count++;
             }
+        }
+
+        // Construct a shared_ref that shares ownership with with a weak_ref
+        // Throw an exception, if the weak_ref is empty
+        template<typename U>
+        explicit shared_ref(const weak_ref<U>& ref) {
+            if (ref.expired()) {
+                throw bad_weak_ref();
+            }
+
+            ptr = ref.ptr;
+            block = ref.block;
+
+            block.base-> strong_count++;
         }
 
         // Destroy this shared_ref object
@@ -431,4 +456,169 @@ namespace std {
             return hash<T*>()(ref.get());
         }
     };
+}
+
+namespace sm {
+    // Smart pointer with reference-counting copy semantics, that doesn't keep the managed object alive
+    template<typename T>
+    class weak_ref {
+    public:
+        // Construct an empty weak_ref
+        constexpr weak_ref() noexcept = default;
+
+        // Construct an empty weak_ref
+        constexpr weak_ref(std::nullptr_t) noexcept {}
+
+        // Construct a weak_ref that shares ownership with a shared_ref
+        // Don't keep the managed object alive, if the last (strong) reference is destroyed
+        weak_ref(const shared_ref<T>& ref) noexcept
+            : ptr(ref.ptr), block(ref.block) {
+            if (block) {
+                block.base->weak_count++;
+            }
+        }
+
+        // Destroy this weak_ref object
+        ~weak_ref() noexcept {
+            destroy_this();
+        }
+
+        // Reset this weak_ref
+        weak_ref& operator=(std::nullptr_t) noexcept {
+            destroy_this();
+
+            ptr = nullptr;
+            block = {};
+
+            return *this;
+        }
+
+        // Reset this weak_ref and instead share ownership with a shared_ref
+        weak_ref& operator=(const shared_ref<T>& ref) noexcept {  // TODO polymorphism
+            destroy_this();
+
+            ptr = ref.ptr;
+            block = ref.block;
+
+            if (block) {
+                block.base->weak_count++;
+            }
+
+            return *this;
+        }
+
+        // Copy constructor
+        // Construct a weak_ref that shares ownership with another weak_ref
+        weak_ref(const weak_ref& other) noexcept  // TODO polymorphism
+            : ptr(other.ptr), block(other.block) {
+            if (block) {
+                block.base->weak_count++;
+            }
+        }
+
+        // Copy assignment
+        // Reset this weak_ref and instead share ownership with another weak_ref
+        weak_ref<T>& operator=(const weak_ref& other) noexcept {
+            destroy_this();
+
+            ptr = other.ptr;
+            block = other.block;
+
+            if (block) {
+                block.base->weak_count++;
+            }
+
+            return *this;
+        }
+
+        // Move constructor
+        // Move-construct a weak_ref from another weak_ref
+        weak_ref(weak_ref&& other) noexcept  // TODO polymorphism
+            : ptr(other.ptr), block(other.block) {
+            other.ptr = nullptr;
+            other.block = {};
+        }
+
+        // Move assignment
+        // Reset this weak_ref and instead and instead move another weak_ref into this
+        weak_ref<T>& operator=(weak_ref&& other) noexcept {
+            destroy_this();
+
+            ptr = other.ptr;
+            block = other.block;
+
+            other.ptr = nullptr;
+            other.block = {};
+
+            return *this;
+        }
+
+        // Get the (strong) reference count
+        std::size_t use_count() const noexcept {
+            if (!block) {
+                return 0u;
+            }
+
+            return block.base->strong_count;
+        }
+
+        // Check if the managed object has been deleted
+        bool expired() const noexcept {
+            return use_count() == 0u;
+        }
+
+        // Create a new shared_ref that shares ownership with this weak_ref object
+        // Return an empty shared_ref, if the managed object has already expired
+        shared_ref<T> lock() const noexcept {
+            shared_ref<T> ref;
+
+            if (!expired()) {
+                ref.ptr = ptr;
+                ref.block = block;
+
+                // We just created a new strong reference
+                block.base->strong_count++;
+            }
+
+            return ref;
+        }
+
+        // Reset this weak_ref
+        void reset() noexcept {
+            destroy_this();
+
+            ptr = nullptr;
+            block = {};
+        }
+
+        // Swap this weak_ref object with another one
+        void swap(weak_ref& other) noexcept {
+            std::swap(ptr, other.ptr);
+            std::swap(block, other.block);
+        }
+    private:
+        void destroy_this() noexcept {
+            if (!block) {
+                return;
+            }
+
+            if (--block.base->weak_count == 0u && block.base->strong_count == 0u) {
+                block.destroy();
+            }
+        }
+
+        T* ptr {nullptr};
+        internal::ControlBlock block;
+
+        template<typename U>
+        friend class shared_ref;
+    };
+}
+
+namespace std {
+    // Swap two weak_ref objects
+    template<typename T>
+    void swap(sm::weak_ref<T>& lhs, sm::weak_ref<T>& rhs) noexcept {
+        lhs.swap(rhs);
+    }
 }
