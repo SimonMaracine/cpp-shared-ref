@@ -78,7 +78,7 @@ TEST(shared_ref, AllocationString_Observers) {
     }
 
     {
-        const char* STRING = "Hello, world! This string is not optimized, as it's too large.";
+        const char* STRING = "Hello, world! This string will not optimized, as it's too large.";
 
         sm::shared_ref<std::string> p {sm::make_shared<std::string>(STRING)};
 
@@ -530,6 +530,36 @@ TEST(shared_ref, ConstructorUniquePtr) {
         std::unique_ptr<int, void(*)(int*)> p {pi, destroy_int};
 
         sm::shared_ref<int> p2 {std::move(p)};
+
+        ASSERT_EQ(*p2, 21);
+        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_TRUE(!p);
+    }
+}
+
+TEST(shared_ref, AssignmentUniquePtr) {
+    {
+        std::unique_ptr<int> p {std::make_unique<int>(21)};
+
+        sm::shared_ref<int> p2 {sm::make_shared<int>(30)};
+
+        p2 = std::move(p);
+
+        ASSERT_EQ(*p2, 21);
+        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_TRUE(!p);
+    }
+
+    {
+        int* pi {static_cast<int*>(std::malloc(sizeof(int)))};
+
+        *pi = 21;
+
+        std::unique_ptr<int, void(*)(int*)> p {pi, destroy_int};
+
+        sm::shared_ref<int> p2 {sm::make_shared<int>(30)};
+
+        p2 = std::move(p);
 
         ASSERT_EQ(*p2, 21);
         ASSERT_EQ(p2.use_count(), 1u);

@@ -209,6 +209,43 @@ TEST(weak_ref, Swap) {
     ASSERT_EQ(*w2.lock(), 30);
 }
 
+TEST(weak_ref, Polymorphism) {
+    {
+        sm::shared_ref<Derived> p {sm::make_shared<Derived>()};
+        sm::weak_ref<Base> p2 {p};
+
+        ASSERT_EQ(p2.lock()->x(), 30);
+    }
+
+    {
+        sm::shared_ref<Derived> p {sm::make_shared<Derived>()};
+        sm::weak_ref<Base> p2;
+        p2 = p;
+
+        ASSERT_EQ(p2.lock()->x(), 30);
+    }
+
+    {
+        sm::weak_ref<Derived> p {sm::weak_ref<Derived>()};
+        sm::weak_ref<Base> p2 {p};
+    }
+
+    {
+        sm::weak_ref<Derived> p {sm::weak_ref<Derived>()};
+        sm::weak_ref<Base> p2;
+        p2 = p;
+    }
+
+    {
+        sm::weak_ref<Base> p {sm::weak_ref<Derived>()};
+    }
+
+    {
+        sm::weak_ref<Base> p;
+        p = sm::weak_ref<Derived>();
+    }
+}
+
 TEST(weak_ref, IncompleteType) {
     sm::weak_ref<NonExisting> p;
 }

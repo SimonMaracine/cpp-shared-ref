@@ -88,12 +88,13 @@ namespace sm {
             destroy_this();
         }
 
-        // Reset this shared_ref
-        shared_ref& operator=(std::nullptr_t) noexcept {
+        // Reset this shared_ref and transfer the ownership of the object managed by the unique_ptr to this
+        template<typename U, typename Deleter>
+        shared_ref& operator=(std::unique_ptr<U, Deleter>&& ref) {
             destroy_this();
 
-            ptr = nullptr;
-            block = {};
+            ptr = ref.release();
+            block = internal::ControlBlock(ptr, std::move(ref.get_deleter()));
 
             return *this;
         }
@@ -475,9 +476,6 @@ namespace sm {
         // Construct an empty weak_ref
         constexpr weak_ref() noexcept = default;
 
-        // Construct an empty weak_ref
-        constexpr weak_ref(std::nullptr_t) noexcept {}
-
         // Construct a weak_ref that shares ownership with a shared_ref
         // Don't keep the managed object alive, if the last (strong) reference is destroyed
         weak_ref(const shared_ref<T>& ref) noexcept
@@ -503,7 +501,8 @@ namespace sm {
         }
 
         // Reset this weak_ref and instead share ownership with a shared_ref
-        weak_ref& operator=(const shared_ref<T>& ref) noexcept {  // TODO polymorphism
+        template<typename U>
+        weak_ref& operator=(const shared_ref<U>& ref) noexcept {
             destroy_this();
 
             ptr = ref.ptr;
@@ -518,7 +517,17 @@ namespace sm {
 
         // Copy constructor
         // Construct a weak_ref that shares ownership with another weak_ref
-        weak_ref(const weak_ref& other) noexcept  // TODO polymorphism
+        weak_ref(const weak_ref& other) noexcept
+            : ptr(other.ptr), block(other.block) {
+            if (block) {
+                block.base->weak_count++;
+            }
+        }
+
+        // Copy constructor
+        // Construct a weak_ref that shares ownership with another weak_ref
+        template<typename U>
+        weak_ref(const weak_ref<U>& other) noexcept
             : ptr(other.ptr), block(other.block) {
             if (block) {
                 block.base->weak_count++;
@@ -540,17 +549,57 @@ namespace sm {
             return *this;
         }
 
+        // Copy assignment
+        // Reset this weak_ref and instead share ownership with another weak_ref
+        template<typename U>
+        weak_ref<T>& operator=(const weak_ref<U>& other) noexcept {
+            destroy_this();
+
+            ptr = other.ptr;
+            block = other.block;
+
+            if (block) {
+                block.base->weak_count++;
+            }
+
+            return *this;
+        }
+
         // Move constructor
         // Move-construct a weak_ref from another weak_ref
-        weak_ref(weak_ref&& other) noexcept  // TODO polymorphism
+        weak_ref(weak_ref&& other) noexcept
+            : ptr(other.ptr), block(other.block) {
+            other.ptr = nullptr;
+            other.block = {};
+        }
+
+        // Move constructor
+        // Move-construct a weak_ref from another weak_ref
+        template<typename U>
+        weak_ref(weak_ref<U>&& other) noexcept
             : ptr(other.ptr), block(other.block) {
             other.ptr = nullptr;
             other.block = {};
         }
 
         // Move assignment
-        // Reset this weak_ref and instead and instead move another weak_ref into this
+        // Reset this weak_ref and instead move another weak_ref into this
         weak_ref<T>& operator=(weak_ref&& other) noexcept {
+            destroy_this();
+
+            ptr = other.ptr;
+            block = other.block;
+
+            other.ptr = nullptr;
+            other.block = {};
+
+            return *this;
+        }
+
+        // Move assignment
+        // Reset this weak_ref and instead move another weak_ref into this
+        template<typename U>
+        weak_ref<T>& operator=(weak_ref<U>&& other) noexcept {
             destroy_this();
 
             ptr = other.ptr;
@@ -621,6 +670,9 @@ namespace sm {
 
         template<typename U>
         friend class shared_ref;
+
+        template<typename U>
+        friend class weak_ref;
     };
 }
 
