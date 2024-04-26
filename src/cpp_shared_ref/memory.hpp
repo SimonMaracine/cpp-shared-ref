@@ -9,7 +9,8 @@
 #include "internal/control_block.hpp"
 
 namespace sm {
-    // Object thrown by the constructors of shared_ref that take weak_ref as the argument, when the weak_ref refers to an already deleted object
+    // Object thrown by the constructors of shared_ref that take weak_ref as the argument,
+    // when the weak_ref refers to an already deleted object
     struct bad_weak_ref : public std::exception {
         bad_weak_ref() noexcept = default;
         bad_weak_ref(const bad_weak_ref&) noexcept = default;
@@ -53,7 +54,7 @@ namespace sm {
             : block(static_cast<T*>(nullptr), std::move(deleter)) {}
 
         // Aliasing constructor
-        // Construct a shared_ref that shares ownership with another shared_ref, but store a pointer to another object
+        // Construct a shared_ref that shares ownership with another shared_ref, but stores a pointer to another object
         template<typename U>
         shared_ref(const shared_ref<U>& other, T* ptr) noexcept
             : ptr(ptr), block(other.block) {
@@ -74,8 +75,13 @@ namespace sm {
             block = ref.block;
 
             // We just created a new strong reference
-            block.base-> strong_count++;
+            block.base->strong_count++;
         }
+
+        // Construct a shared_ref that takes ownership from a unique_ptr
+        template<typename U, typename Deleter>
+        shared_ref(std::unique_ptr<U, Deleter>&& ref)  // TODO what's up with Deleter being a reference type?
+            : shared_ref(ref.release(), std::move(ref.get_deleter())) {}
 
         // Destroy this shared_ref object
         ~shared_ref() noexcept {
@@ -102,7 +108,7 @@ namespace sm {
         }
 
         // Copy constructor
-        // Construct a shared_ref that shares ownership with another shared_ref (used by polymorphism)
+        // Construct a shared_ref that shares ownership with another shared_ref
         template<typename U>
         shared_ref(const shared_ref<U>& other) noexcept
             : ptr(other.ptr), block(other.block) {
@@ -127,7 +133,7 @@ namespace sm {
         }
 
         // Copy assignment
-        // Reset this shared_ref and instead share ownership with another shared_ref (used by polymorphism)
+        // Reset this shared_ref and instead share ownership with another shared_ref
         template<typename U>
         shared_ref& operator=(const shared_ref<U>& other) noexcept {
             destroy_this();
@@ -151,7 +157,7 @@ namespace sm {
         }
 
         // Move constructor
-        // Move-construct a shared_ref from another shared_ref (used by polymorphism)
+        // Move-construct a shared_ref from another shared_ref
         template<typename U>
         shared_ref(shared_ref<U>&& other) noexcept
             : ptr(other.ptr), block(other.block) {
@@ -174,7 +180,7 @@ namespace sm {
         }
 
         // Move assignment
-        // Reset this shared_ref and instead move another shared_ref into this (used by polymorphism)
+        // Reset this shared_ref and instead move another shared_ref into this
         template<typename U>
         shared_ref& operator=(shared_ref<U>&& other) noexcept {
             destroy_this();

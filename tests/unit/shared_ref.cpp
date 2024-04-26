@@ -3,11 +3,16 @@
 #include <utility>
 #include <cstdlib>
 #include <functional>
+#include <memory>
 
 #include <gtest/gtest.h>
 #include <cpp_shared_ref/memory.hpp>
 
 #include "types.hpp"
+
+static void destroy_int(int* i) {
+    std::free(i);
+}
 
 TEST(shared_ref, NoAllocation) {
     sm::shared_ref<S> p;
@@ -284,16 +289,12 @@ TEST(shared_ref, Swap) {
     ASSERT_EQ(*p2, 30);
 }
 
-static void destroy(int* i) {
-    std::free(i);
-}
-
 TEST(shared_ref, CustomDeleter) {
-    int* i {static_cast<int*>(std::malloc(sizeof(int)))};
-    int* i2 {static_cast<int*>(std::malloc(sizeof(int)))};
+    int* pi {static_cast<int*>(std::malloc(sizeof(int)))};
+    int* pi2 {static_cast<int*>(std::malloc(sizeof(int)))};
 
-    *i = 21;
-    *i2 = 21;
+    *pi = 21;
+    *pi2 = 21;
 
     struct Del {
         void operator()(int* i) const noexcept {
@@ -301,12 +302,12 @@ TEST(shared_ref, CustomDeleter) {
         }
     };
 
-    sm::shared_ref<int> p {i, Del()};
+    sm::shared_ref<int> p {pi, Del()};
     sm::shared_ref<int> p2 {nullptr, [](int* i) { std::free(i); }};
 
     sm::shared_ref<int> p3 {new int(30)};
 
-    p3.reset(i2, destroy);
+    p3.reset(pi2, destroy_int);
 }
 
 TEST(shared_ref, Casts) {
@@ -398,19 +399,15 @@ TEST(shared_ref, Polymorphism) {
     }
 }
 
-static void destroy2(int* i) {
-    std::free(i);
-}
-
 TEST(shared_ref, GetDeleter) {
     {
-        int* i {static_cast<int*>(std::malloc(sizeof(int)))};
+        int* pi {static_cast<int*>(std::malloc(sizeof(int)))};
 
-        sm::shared_ref<int> p {i, destroy2};
+        sm::shared_ref<int> p {pi, destroy_int};
 
         auto deleter {sm::get_deleter<void(*)(int*)>(p)};
 
-        ASSERT_EQ(*deleter, destroy2);
+        ASSERT_EQ(*deleter, destroy_int);
     }
 
     {
@@ -511,5 +508,31 @@ TEST(shared_ref, ConstructorWeakRef) {
         sm::shared_ref<int> p2 {w};
 
         ASSERT_EQ(p2.use_count(), 2u);
+    }
+}
+
+TEST(shared_ref, ConstructorUniquePtr) {
+    {
+        std::unique_ptr<int> p {std::make_unique<int>(21)};
+
+        sm::shared_ref<int> p2 {std::move(p)};
+
+        ASSERT_EQ(*p2, 21);
+        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_TRUE(!p);
+    }
+
+    {
+        int* pi {static_cast<int*>(std::malloc(sizeof(int)))};
+
+        *pi = 21;
+
+        std::unique_ptr<int, void(*)(int*)> p {pi, destroy_int};
+
+        sm::shared_ref<int> p2 {std::move(p)};
+
+        ASSERT_EQ(*p2, 21);
+        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_TRUE(!p);
     }
 }
