@@ -1,1 +1,0 @@
-Took 136.88 ms average; 100 iterations

@@ -8,7 +8,7 @@ that the reference increments and decrements are not atomic. The premise is that
 can be very useful in contexts outside of multithreading, in which atomicity is not needed, being just useless
 overhead. This is why I tried making my own version of `std::shared_ptr`.
 
-Right now, `shared_ref` doesn't fully conform with the `std::shared_ptr` specification of `C++17`. This is probably
+Right now, `shared_ref` doesn't fully conform to the `std::shared_ptr` specification of `C++17`. This is probably
 an incomplete list of missing features from my version:
 
 - Not allocator-aware

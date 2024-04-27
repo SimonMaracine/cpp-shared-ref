@@ -16,7 +16,7 @@ namespace sm {
         bad_weak_ref(const bad_weak_ref&) noexcept = default;
 
         const char* what() const noexcept override {
-            return "Shared pointer construction failed, as weak pointer is empty";
+            return "Shared pointer construction failed, as weak pointer manages no object";
         }
     };
 }
@@ -74,7 +74,6 @@ namespace sm {
             ptr = ref.ptr;
             block = ref.block;
 
-            // We just created a new strong reference
             block.base->strong_count++;
         }
 
@@ -634,7 +633,6 @@ namespace sm {
                 ref.ptr = ptr;
                 ref.block = block;
 
-                // We just created a new strong reference
                 block.base->strong_count++;
             }
 
