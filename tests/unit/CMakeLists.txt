@@ -6,6 +6,7 @@ set(BUILD_GMOCK OFF)
 add_subdirectory(extern/googletest)
 
 add_executable(test_unit
+    "owner_less.cpp"
     "shared_ref.cpp"
     "types.hpp"
     "weak_ref.cpp"

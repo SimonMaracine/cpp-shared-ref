@@ -705,3 +705,64 @@ namespace std {
         lhs.swap(rhs);
     }
 }
+
+namespace sm {
+    // Functor that provides owner-based mixed-type ordering of shared_ref and weak_ref
+    template<typename T = void>
+    struct owner_less;
+
+    template<typename T>
+    struct owner_less<shared_ref<T>> {
+        bool operator()(const shared_ref<T>& lhs, const shared_ref<T>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        bool operator()(const shared_ref<T>& lhs, const weak_ref<T>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        bool operator()(const weak_ref<T>& lhs, const shared_ref<T>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+    };
+
+    template<typename T>
+    struct owner_less<weak_ref<T>> {
+        bool operator()(const weak_ref<T>& lhs, const weak_ref<T>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        bool operator()(const shared_ref<T>& lhs, const weak_ref<T>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        bool operator()(const weak_ref<T>& lhs, const shared_ref<T>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+    };
+
+    template<>
+    struct owner_less<void> {
+        template<typename T, typename U>
+        bool operator()(const shared_ref<T>& lhs, const shared_ref<U>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        template<typename T, typename U>
+        bool operator()(const shared_ref<T>& lhs, const weak_ref<U>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        template<typename T, typename U>
+        bool operator()(const weak_ref<T>& lhs, const shared_ref<U>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        template<typename T, typename U>
+        bool operator()(const weak_ref<T>& lhs, const weak_ref<U>& rhs) const noexcept {
+            return lhs.owner_before(rhs);
+        }
+
+        using is_transparent = void;
+    };
+}
