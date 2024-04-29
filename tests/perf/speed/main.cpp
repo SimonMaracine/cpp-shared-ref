@@ -16,7 +16,7 @@ struct Obj {
 };
 
 template<typename T, typename SmartPointer, unsigned int Repeat>
-double test_speed() {
+static double test_speed() {
     std::chrono::duration<double> total {0.0};
 
     for (unsigned int repeat {0u}; repeat < Repeat; repeat++) {

@@ -501,16 +501,6 @@ namespace sm {
             destroy_this();
         }
 
-        // Reset this weak_ref
-        weak_ref& operator=(std::nullptr_t) noexcept {
-            destroy_this();
-
-            ptr = nullptr;
-            block = {};
-
-            return *this;
-        }
-
         // Reset this weak_ref and instead share ownership with a shared_ref
         template<typename U>
         weak_ref& operator=(const shared_ref<U>& ref) noexcept {

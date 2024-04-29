@@ -14,7 +14,6 @@ an incomplete list of missing features from my version:
 - Not allocator-aware
 - No support for arrays
 - No support for `shared_from_this`
-- Missing `owner_before` methods
 - No support for `-fno-exceptions`
 - Deprecated features as of `C++17` are missing (for good)
 

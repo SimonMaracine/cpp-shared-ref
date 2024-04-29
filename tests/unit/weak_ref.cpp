@@ -132,29 +132,6 @@ TEST(weak_ref, Expired) {
     ASSERT_TRUE(w.expired());
 }
 
-TEST(weak_ref, AssignmentNullptr) {
-    {
-        sm::shared_ref<int> p {sm::make_shared<int>(21)};
-        sm::weak_ref<int> w {p};
-
-        ASSERT_EQ(w.use_count(), 1u);
-
-        w = nullptr;
-
-        ASSERT_EQ(w.use_count(), 0u);
-    }
-
-    {
-        sm::weak_ref<int> w;
-
-        ASSERT_EQ(w.use_count(), 0u);
-
-        w = nullptr;
-
-        ASSERT_EQ(w.use_count(), 0u);
-    }
-}
-
 TEST(weak_ref, Reset) {
     {
         sm::weak_ref<int> w;
