@@ -565,4 +565,54 @@ TEST(shared_ref, AssignmentUniquePtr) {
         ASSERT_EQ(p2.use_count(), 1u);
         ASSERT_TRUE(!p);
     }
+
+    {
+        std::unique_ptr<int> p;
+
+        sm::shared_ref<int> p2 {sm::make_shared<int>(30)};
+
+        p2 = std::move(p);
+
+        ASSERT_TRUE(!p2);
+        ASSERT_TRUE(!p);
+    }
+}
+
+TEST(shared_ref, OwnerBefore) {
+    {
+        sm::shared_ref<Ints> p {sm::make_shared<Ints>(21, 30)};
+
+        sm::shared_ref<int> p2 {p, &p->a};
+        sm::shared_ref<int> p3 {p, &p->b};
+
+        ASSERT_TRUE(p2 < p3);
+        ASSERT_FALSE(p3 < p2);
+        ASSERT_FALSE(p2.owner_before(p3));
+        ASSERT_FALSE(p3.owner_before(p2));
+
+        sm::weak_ref<int> w2 {p2};
+
+        ASSERT_FALSE(p2.owner_before(w2));
+    }
+
+    {
+        sm::shared_ref<int> p;
+
+        sm::shared_ref<int> p2 {p};
+        sm::shared_ref<int> p3 {p};
+
+        ASSERT_FALSE(p2.owner_before(p3));
+        ASSERT_FALSE(p3.owner_before(p2));
+
+        sm::weak_ref<int> w2 {p2};
+
+        ASSERT_FALSE(p2.owner_before(w2));
+    }
+
+    {
+        sm::shared_ref<int> p {sm::make_shared<int>()};
+        sm::shared_ref<int> p2 {sm::make_shared<int>()};
+
+        ASSERT_TRUE(p.owner_before(p2) || p2.owner_before(p));
+    }
 }

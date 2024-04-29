@@ -89,3 +89,11 @@ public:
 private:
     int* p {nullptr};
 };
+
+struct Ints {
+    Ints(int a, int b)
+        : a(a), b(b) {}
+
+    int a {};
+    int b {};
+};

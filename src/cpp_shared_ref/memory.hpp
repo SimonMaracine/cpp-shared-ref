@@ -231,6 +231,18 @@ namespace sm {
             return ptr != nullptr;
         }
 
+        // Check if this shared_ref precedes the other
+        template<typename U>
+        bool owner_before(const shared_ref<U>& other) const noexcept {
+            return block.base < other.block.base;
+        }
+
+        // Check if this shared_ref precedes the weak_ref
+        template<typename U>
+        bool owner_before(const weak_ref<U>& other) const noexcept {
+            return block.base < other.block.base;
+        }
+
         // Reset this shared_ref
         void reset() noexcept {
             destroy_this();
@@ -637,6 +649,18 @@ namespace sm {
             }
 
             return ref;
+        }
+
+        // Check if this weak_ref precedes the other
+        template<typename U>
+        bool owner_before(const weak_ref<U>& other) const noexcept {
+            return block.base < other.block.base;
+        }
+
+        // Check if this weak_ref precedes the shared_ref
+        template<typename U>
+        bool owner_before(const shared_ref<U>& other) const noexcept {
+            return block.base < other.block.base;
         }
 
         // Reset this weak_ref

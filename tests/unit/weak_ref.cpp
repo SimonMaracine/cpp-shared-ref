@@ -249,3 +249,43 @@ TEST(weak_ref, Polymorphism) {
 TEST(weak_ref, IncompleteType) {
     sm::weak_ref<NonExisting> p;
 }
+
+TEST(weak_ref, OwnerBefore) {
+    {
+        sm::shared_ref<Ints> p {sm::make_shared<Ints>(21, 30)};
+
+        sm::shared_ref<int> p2 {p, &p->a};
+        sm::shared_ref<int> p3 {p, &p->b};
+
+        sm::weak_ref<int> w2 {p2};
+        sm::weak_ref<int> w3 {p3};
+
+        ASSERT_FALSE(w2.owner_before(w3));
+        ASSERT_FALSE(w3.owner_before(w2));
+        ASSERT_FALSE(w2.owner_before(p2));
+    }
+
+    {
+        sm::shared_ref<int> p;
+
+        sm::shared_ref<int> p2 {p};
+        sm::shared_ref<int> p3 {p};
+
+        sm::weak_ref<int> w2 {p2};
+        sm::weak_ref<int> w3 {p3};
+
+        ASSERT_FALSE(w2.owner_before(w3));
+        ASSERT_FALSE(w3.owner_before(w2));
+        ASSERT_FALSE(w2.owner_before(p2));
+    }
+
+    {
+        sm::shared_ref<int> p {sm::make_shared<int>()};
+        sm::shared_ref<int> p2 {sm::make_shared<int>()};
+
+        sm::weak_ref<int> w {p};
+        sm::weak_ref<int> w2 {p2};
+
+        ASSERT_TRUE(w.owner_before(w2) || w2.owner_before(w));
+    }
+}
