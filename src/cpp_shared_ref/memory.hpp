@@ -755,4 +755,32 @@ namespace sm {
 
         using is_transparent = void;
     };
+
+    template<typename T>
+    class enable_shared_from_this {
+    public:
+        constexpr enable_shared_from_this() noexcept = default;
+        ~enable_shared_from_this() = default;
+
+        enable_shared_from_this(const enable_shared_from_this& other) noexcept = default;
+        enable_shared_from_this& operator=(const enable_shared_from_this& other) noexcept = default;
+
+        shared_ref<T> shared_from_this() {
+            return shared_ref<T>(weak_this);
+        }
+
+        shared_ref<const T> shared_from_this() const {
+            return shared_ref<const T>(weak_this);
+        }
+
+        weak_ref<T> weak_from_this() noexcept {
+            return weak_ref<T>(weak_this);
+        }
+
+        weak_ref<const T> weak_from_this() const noexcept {
+            return weak_ref<const T>(weak_this);
+        }
+    private:
+        weak_ref<T> weak_this;
+    };
 }

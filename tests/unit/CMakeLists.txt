@@ -6,6 +6,7 @@ set(BUILD_GMOCK OFF)
 add_subdirectory(extern/googletest)
 
 add_executable(test_unit
+    "enable_shared_from_this.cpp"
     "owner_less.cpp"
     "shared_ref.cpp"
     "types.hpp"
