@@ -5,7 +5,7 @@
 #include <iosfwd>  // std::basic_ostream
 #include <memory>  // std::unique_ptr, std::hash
 #include <exception>
-#include <type_traits>  // std::is_base_of
+#include <type_traits>
 
 #include "internal/control_block.hpp"
 
@@ -44,7 +44,7 @@ namespace sm {
         template<typename U>
         explicit shared_ref(U* ptr)
             : ptr(ptr), block(ptr) {
-            check_shared_from_this();
+            check_shared_from_this(ptr);
         }
 
         // Construct a shared_ref from an existing object not created using new
@@ -53,7 +53,7 @@ namespace sm {
         template<typename U, typename Deleter>
         shared_ref(U* ptr, Deleter deleter)
             : ptr(ptr), block(ptr, std::move(deleter)) {
-            check_shared_from_this();
+            check_shared_from_this(ptr);
         }
 
         // Construct an empty shared_ref with this deleter
@@ -268,7 +268,7 @@ namespace sm {
             this->ptr = ptr;
             block = internal::ControlBlock(ptr);
 
-            check_shared_from_this();
+            check_shared_from_this(ptr);
         }
 
         // Reset this shared_ref and instead manage an existing object created using new
@@ -281,7 +281,7 @@ namespace sm {
             this->ptr = ptr;
             block = internal::ControlBlock(ptr, std::move(deleter));
 
-            check_shared_from_this();
+            check_shared_from_this(ptr);
         }
 
         // Swap this shared_ref object with another one
@@ -305,13 +305,29 @@ namespace sm {
             }
         }
 
-        void check_shared_from_this() {
-            if constexpr (std::is_base_of_v<enable_shared_from_this<T>, T>) {  // TODO check decltype instead?
-                if (ptr->weak_this.expired()) {
-                    ptr->weak_this = *this;
-                }
+        template<typename U, typename = void>
+        struct has_sft_base : std::false_type {};
+
+        template<typename U>
+        struct has_sft_base<U, std::void_t<
+            decltype(std::declval<U>().shared_from_this()),
+            decltype(std::declval<U>().weak_from_this()),
+            decltype(std::declval<U>().weak_this)
+        >> : std::true_type {};
+
+        template<typename U, typename U2 = std::remove_cv_t<U>>
+        std::enable_if_t<has_sft_base<U2>::value>
+        check_shared_from_this(U* ptr) noexcept {
+            if (!this->ptr->weak_this.expired()) {
+                return;
             }
+
+            this->ptr->weak_this.assign(const_cast<U2*>(ptr), block);
         }
+
+        template<typename U>
+        std::enable_if_t<!has_sft_base<U>::value>
+        check_shared_from_this(U*) noexcept {}
 
         T* ptr {nullptr};
         internal::ControlBlock block;
@@ -334,7 +350,7 @@ namespace sm {
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
         ref.block = internal::ControlBlock(ref.ptr, internal::MakeSharedTag(), std::forward<Args>(args)...);
-        ref.check_shared_from_this();
+        ref.template check_shared_from_this(ref.ptr);
 
         return ref;
     }
@@ -698,6 +714,16 @@ namespace sm {
             }
         }
 
+        template<typename U>
+        void assign(U* ptr, internal::ControlBlock block) noexcept {
+            this->ptr = ptr;
+            this->block = block;
+
+            if (block) {
+                block.base->weak_count++;
+            }
+        }
+
         T* ptr {nullptr};
         internal::ControlBlock block;
 
@@ -780,13 +806,6 @@ namespace sm {
     template<typename T>
     class enable_shared_from_this {
     public:
-        constexpr enable_shared_from_this() noexcept = default;
-
-        ~enable_shared_from_this() = default;
-
-        enable_shared_from_this(const enable_shared_from_this& other) noexcept = default;
-        enable_shared_from_this& operator=(const enable_shared_from_this& other) noexcept = default;
-
         shared_ref<T> shared_from_this() {
             return shared_ref<T>(weak_this);
         }
@@ -802,8 +821,14 @@ namespace sm {
         weak_ref<const T> weak_from_this() const noexcept {
             return weak_ref<const T>(weak_this);
         }
+    protected:
+        constexpr enable_shared_from_this() noexcept {}
+        ~enable_shared_from_this() {}
+
+        enable_shared_from_this(const enable_shared_from_this& other) noexcept {}
+        enable_shared_from_this& operator=(const enable_shared_from_this& other) noexcept { return *this; }
     private:
-        weak_ref<T> weak_this;
+        mutable weak_ref<T> weak_this;
 
         template<typename U>
         friend class shared_ref;

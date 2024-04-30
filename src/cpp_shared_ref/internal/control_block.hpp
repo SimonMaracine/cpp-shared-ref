@@ -62,7 +62,7 @@ namespace sm {
         public:
             template<typename... Args>
             ControlBlockInPlace(Args&&... args) {
-                ::new (&impl.object) T(std::forward<Args>(args)...);
+                ::new (std::addressof(impl.object)) T(std::forward<Args>(args)...);
             }
 
             void dispose() const noexcept override {
@@ -74,7 +74,7 @@ namespace sm {
             }
 
             T* get_ptr() noexcept {
-                return &impl.object;
+                return std::addressof(impl.object);
             }
         private:
             union Impl {
