@@ -13,7 +13,7 @@ namespace sm {
             virtual void* get_deleter(const std::type_info& ti) noexcept = 0;
 
             std::size_t strong_count {1u};
-            std::size_t weak_count {0u};
+            std::size_t weak_count {1u};
         };
 
         template<typename T, typename Deleter>

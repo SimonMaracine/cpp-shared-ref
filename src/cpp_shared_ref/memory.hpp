@@ -5,6 +5,7 @@
 #include <iosfwd>  // std::basic_ostream
 #include <memory>  // std::unique_ptr, std::hash
 #include <exception>
+#include <type_traits>  // std::is_base_of
 
 #include "internal/control_block.hpp"
 
@@ -25,6 +26,9 @@ namespace sm {
     template<typename T>
     class weak_ref;
 
+    template<typename T>
+    class enable_shared_from_this;
+
     // Smart pointer with reference-counting copy semantics
     template<typename T>
     class shared_ref {
@@ -39,14 +43,18 @@ namespace sm {
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U>
         explicit shared_ref(U* ptr)
-            : ptr(ptr), block(ptr) {}
+            : ptr(ptr), block(ptr) {
+            check_shared_from_this();
+        }
 
         // Construct a shared_ref from an existing object not created using new
         // Destroy the object with this deleter
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U, typename Deleter>
         shared_ref(U* ptr, Deleter deleter)
-            : ptr(ptr), block(ptr, std::move(deleter)) {}
+            : ptr(ptr), block(ptr, std::move(deleter)) {
+            check_shared_from_this();
+        }
 
         // Construct an empty shared_ref with this deleter
         template<typename Deleter>
@@ -259,6 +267,8 @@ namespace sm {
 
             this->ptr = ptr;
             block = internal::ControlBlock(ptr);
+
+            check_shared_from_this();
         }
 
         // Reset this shared_ref and instead manage an existing object created using new
@@ -270,6 +280,8 @@ namespace sm {
 
             this->ptr = ptr;
             block = internal::ControlBlock(ptr, std::move(deleter));
+
+            check_shared_from_this();
         }
 
         // Swap this shared_ref object with another one
@@ -287,8 +299,16 @@ namespace sm {
                 ptr = nullptr;
                 block.base->dispose();
 
-                if (block.base->weak_count == 0u) {
+                if (--block.base->weak_count == 0u) {
                     block.destroy();
+                }
+            }
+        }
+
+        void check_shared_from_this() {
+            if constexpr (std::is_base_of_v<enable_shared_from_this<T>, T>) {  // TODO check decltype instead?
+                if (ptr->weak_this.expired()) {
+                    ptr->weak_this = *this;
                 }
             }
         }
@@ -314,6 +334,7 @@ namespace sm {
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
         ref.block = internal::ControlBlock(ref.ptr, internal::MakeSharedTag(), std::forward<Args>(args)...);
+        ref.check_shared_from_this();
 
         return ref;
     }
@@ -760,6 +781,7 @@ namespace sm {
     class enable_shared_from_this {
     public:
         constexpr enable_shared_from_this() noexcept = default;
+
         ~enable_shared_from_this() = default;
 
         enable_shared_from_this(const enable_shared_from_this& other) noexcept = default;
@@ -782,5 +804,8 @@ namespace sm {
         }
     private:
         weak_ref<T> weak_this;
+
+        template<typename U>
+        friend class shared_ref;
     };
 }
