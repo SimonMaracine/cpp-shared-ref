@@ -310,7 +310,7 @@ namespace sm {
 
         template<typename U>
         struct has_sft_base<U, std::void_t<
-            decltype(std::declval<U>().shared_from_this()),
+            decltype(std::declval<U>().shared_from_this()),  // TODO not the best
             decltype(std::declval<U>().weak_from_this()),
             decltype(std::declval<U>().weak_this)
         >> : std::true_type {};
