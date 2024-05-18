@@ -16,7 +16,7 @@ add_executable(test_unit
 target_link_libraries(test_unit PRIVATE cpp_shared_ref GTest::gtest_main)
 
 if(UNIX)
-    target_compile_options(test_unit PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-fno-elide-constructors")
+    target_compile_options(test_unit PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-Wconversion" "-fno-elide-constructors")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(test_unit PRIVATE "/W4")
 else()

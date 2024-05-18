@@ -13,8 +13,8 @@ namespace sm {
             virtual void dispose() const noexcept = 0;
             virtual void* get_deleter(const std::type_info& ti) noexcept = 0;
 
-            std::size_t strong_count {1u};
-            std::size_t weak_count {1u};
+            std::size_t strong_count {1};
+            std::size_t weak_count {1};
         };
 
         template<typename T, typename Deleter>

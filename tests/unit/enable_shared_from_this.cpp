@@ -37,8 +37,8 @@ TEST(enable_shared_from_this, SharedFromThis_Constructor) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -47,8 +47,8 @@ TEST(enable_shared_from_this, SharedFromThis_Constructor) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -57,8 +57,8 @@ TEST(enable_shared_from_this, SharedFromThis_Constructor) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -67,8 +67,8 @@ TEST(enable_shared_from_this, SharedFromThis_Constructor) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -77,8 +77,8 @@ TEST(enable_shared_from_this, SharedFromThis_Constructor) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -87,8 +87,8 @@ TEST(enable_shared_from_this, SharedFromThis_Constructor) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 }
@@ -100,8 +100,8 @@ TEST(enable_shared_from_this, SharedFromThis_Reset) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -111,8 +111,8 @@ TEST(enable_shared_from_this, SharedFromThis_Reset) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -122,8 +122,8 @@ TEST(enable_shared_from_this, SharedFromThis_Reset) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -133,8 +133,8 @@ TEST(enable_shared_from_this, SharedFromThis_Reset) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -144,8 +144,8 @@ TEST(enable_shared_from_this, SharedFromThis_Reset) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -155,8 +155,8 @@ TEST(enable_shared_from_this, SharedFromThis_Reset) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 }
@@ -167,8 +167,8 @@ TEST(enable_shared_from_this, SharedFromThis_MakeShared) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -177,8 +177,8 @@ TEST(enable_shared_from_this, SharedFromThis_MakeShared) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -187,8 +187,8 @@ TEST(enable_shared_from_this, SharedFromThis_MakeShared) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -197,8 +197,8 @@ TEST(enable_shared_from_this, SharedFromThis_MakeShared) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -207,8 +207,8 @@ TEST(enable_shared_from_this, SharedFromThis_MakeShared) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 
@@ -217,8 +217,8 @@ TEST(enable_shared_from_this, SharedFromThis_MakeShared) {
 
         auto p2 {p->make_new()};
 
-        ASSERT_EQ(p.use_count(), 2u);
-        ASSERT_EQ(p2.use_count(), 2u);
+        ASSERT_EQ(p.use_count(), 2);
+        ASSERT_EQ(p2.use_count(), 2);
         ASSERT_EQ(p->foo, p2->foo);
     }
 }
@@ -229,8 +229,8 @@ TEST(enable_shared_from_this, WeakFromThis_Constructor) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -239,8 +239,8 @@ TEST(enable_shared_from_this, WeakFromThis_Constructor) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -249,8 +249,8 @@ TEST(enable_shared_from_this, WeakFromThis_Constructor) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -259,8 +259,8 @@ TEST(enable_shared_from_this, WeakFromThis_Constructor) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -269,8 +269,8 @@ TEST(enable_shared_from_this, WeakFromThis_Constructor) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -279,8 +279,8 @@ TEST(enable_shared_from_this, WeakFromThis_Constructor) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 }
@@ -292,8 +292,8 @@ TEST(enable_shared_from_this, WeakFromThis_Reset) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -303,8 +303,8 @@ TEST(enable_shared_from_this, WeakFromThis_Reset) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -314,8 +314,8 @@ TEST(enable_shared_from_this, WeakFromThis_Reset) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -325,8 +325,8 @@ TEST(enable_shared_from_this, WeakFromThis_Reset) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -336,8 +336,8 @@ TEST(enable_shared_from_this, WeakFromThis_Reset) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -347,8 +347,8 @@ TEST(enable_shared_from_this, WeakFromThis_Reset) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 }
@@ -359,8 +359,8 @@ TEST(enable_shared_from_this, WeakFromThis_MakeShared) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -369,8 +369,8 @@ TEST(enable_shared_from_this, WeakFromThis_MakeShared) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -379,8 +379,8 @@ TEST(enable_shared_from_this, WeakFromThis_MakeShared) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -389,8 +389,8 @@ TEST(enable_shared_from_this, WeakFromThis_MakeShared) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -399,8 +399,8 @@ TEST(enable_shared_from_this, WeakFromThis_MakeShared) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 
@@ -409,8 +409,8 @@ TEST(enable_shared_from_this, WeakFromThis_MakeShared) {
 
         auto p2 {p->make_new_weak()};
 
-        ASSERT_EQ(p.use_count(), 1u);
-        ASSERT_EQ(p2.use_count(), 1u);
+        ASSERT_EQ(p.use_count(), 1);
+        ASSERT_EQ(p2.use_count(), 1);
         ASSERT_EQ(p->foo, p2.lock()->foo);
     }
 }
@@ -420,6 +420,6 @@ TEST(enable_shared_from_this, Aliasing) {
 
     sm::shared_ref<int> p2 {p, &p->foo};
 
-    ASSERT_EQ(p.use_count(), 2u);
-    ASSERT_EQ(p2.use_count(), 2u);
+    ASSERT_EQ(p.use_count(), 2);
+    ASSERT_EQ(p2.use_count(), 2);
 }

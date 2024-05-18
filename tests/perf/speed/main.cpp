@@ -12,24 +12,24 @@ enum class Type {
 };
 
 struct Obj {
-    char c[64u] {};
+    char c[64] {};
 };
 
 template<typename T, typename SmartPointer, unsigned int Repeat>
 static double test_speed() {
     std::chrono::duration<double> total {0.0};
 
-    for (unsigned int repeat {0u}; repeat < Repeat; repeat++) {
+    for (unsigned int repeat {0}; repeat < Repeat; repeat++) {
         const auto begin {std::chrono::high_resolution_clock::now()};
 
         SmartPointer p {new T};
-        p->c[0u] = 21;
+        p->c[0] = 21;
 
-        for (unsigned int i {0u}; i < 1000u; i++) {
-            static constexpr std::size_t POINTERS {20'000u};
+        for (unsigned int i {0}; i < 1000; i++) {
+            static constexpr std::size_t POINTERS {20'000};
             SmartPointer ps[POINTERS] {};
 
-            for (std::size_t j {0u}; j < POINTERS; j++) {
+            for (std::size_t j {0}; j < POINTERS; j++) {
                 ps[j] = p;
             }
         }
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    const char* arg {argv[1u]};
+    const char* arg {argv[1]};
     Type type {};
 
     if (std::strcmp(arg, "ref") == 0) {
@@ -67,12 +67,12 @@ int main(int argc, char** argv) {
 
     switch (type) {
         case Type::Ref:
-            result = test_speed<Obj, sm::shared_ref<Obj>, 100u>();
+            result = test_speed<Obj, sm::shared_ref<Obj>, 100>();
             break;
         case Type::Ptr:
-            result = test_speed<Obj, std::shared_ptr<Obj>, 100u>();
+            result = test_speed<Obj, std::shared_ptr<Obj>, 100>();
             break;
     }
 
-    std::cout << "Took " << result << " ms average; " << 100u << " iterations\n";
+    std::cout << "Took " << result << " ms average; " << 100 << " iterations\n";
 }

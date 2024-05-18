@@ -223,7 +223,7 @@ namespace sm {
         // Get the reference count
         std::size_t use_count() const noexcept {
             if (!block) {
-                return 0u;
+                return 0;
             }
 
             return block.base->strong_count;
@@ -231,7 +231,7 @@ namespace sm {
 
         // Check if the managed object has only one reference
         bool unique() const noexcept {
-            return use_count() == 1u;
+            return use_count() == 1;
         }
 
         // Check if the stored pointer is not null
@@ -295,11 +295,11 @@ namespace sm {
                 return;
             }
 
-            if (--block.base->strong_count == 0u) {
+            if (--block.base->strong_count == 0) {
                 ptr = nullptr;
                 block.base->dispose();
 
-                if (--block.base->weak_count == 0u) {
+                if (--block.base->weak_count == 0) {
                     block.destroy();
                 }
             }
@@ -652,7 +652,7 @@ namespace sm {
         // Get the (strong) reference count
         std::size_t use_count() const noexcept {
             if (!block) {
-                return 0u;
+                return 0;
             }
 
             return block.base->strong_count;
@@ -660,7 +660,7 @@ namespace sm {
 
         // Check if the managed object has been deleted
         bool expired() const noexcept {
-            return use_count() == 0u;
+            return use_count() == 0;
         }
 
         // Create a new shared_ref that shares ownership with this weak_ref object
@@ -709,7 +709,7 @@ namespace sm {
                 return;
             }
 
-            if (--block.base->weak_count == 0u && block.base->strong_count == 0u) {
+            if (--block.base->weak_count == 0 && block.base->strong_count == 0) {
                 block.destroy();
             }
         }

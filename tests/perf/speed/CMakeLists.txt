@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 
-add_executable(test_speed
-    "main.cpp"
-)
+add_executable(test_speed "main.cpp")
 
 target_link_libraries(test_speed PRIVATE cpp_shared_ref)
 
 if(UNIX)
-    target_compile_options(test_speed PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-O2")
+    target_compile_options(test_speed PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-Wconversion" "-O2")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(test_speed PRIVATE "/W4")
 else()
