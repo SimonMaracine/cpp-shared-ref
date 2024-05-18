@@ -350,7 +350,7 @@ namespace sm {
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
         ref.block = internal::ControlBlock(ref.ptr, internal::MakeSharedTag(), std::forward<Args>(args)...);
-        ref.template check_shared_from_this(ref.ptr);
+        ref.check_shared_from_this(ref.ptr);  // FIXME template doesn't work in MSVC
 
         return ref;
     }
