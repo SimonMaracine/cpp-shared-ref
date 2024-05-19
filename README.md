@@ -60,7 +60,7 @@ int main() {
     auto baz {foo.lock()};
 
     if (baz) {
-        std::cout << "This is never printed\n";
+        std::cout << "This never gets printed\n";
     }
 }
 ```
