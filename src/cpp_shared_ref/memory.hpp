@@ -803,21 +803,28 @@ namespace sm {
         using is_transparent = void;
     };
 
+    // Class that, when publicly inherited from, allows an object currently managed by shared_ref to safely create
+    // new shared_ref instances
+    // Calling shared_from_this on an object not currently managed by a shared_ref throws a bad_weak_ref object
     template<typename T>
     class enable_shared_from_this {
     public:
+        // Return a new shared_ref that shares ownership with the shared_ref currently managing the object T
         shared_ref<T> shared_from_this() {
             return shared_ref<T>(weak_this);
         }
 
+        // Return a new shared_ref that shares ownership with the shared_ref currently managing the object T
         shared_ref<const T> shared_from_this() const {
             return shared_ref<const T>(weak_this);
         }
 
+        // Return a new weak_ref that shares ownership with the shared_ref currently managing the object T
         weak_ref<T> weak_from_this() noexcept {
             return weak_ref<T>(weak_this);
         }
 
+        // Return a new weak_ref that shares ownership with the shared_ref currently managing the object T
         weak_ref<const T> weak_from_this() const noexcept {
             return weak_ref<const T>(weak_this);
         }
