@@ -5,6 +5,7 @@ project("cpp-shared-ref" LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Variable used to control the build type")
 
 option(CPP_SHARED_REF_BUILD_TESTS "Turn this on to build test binaries" OFF)
+option(CPP_SHARED_REF_ASAN "Turn this on to enable sanitizers in unit tests" OFF)
 
 add_library(cpp_shared_ref INTERFACE
     "src/cpp_shared_ref/internal/control_block.hpp"
@@ -19,3 +20,4 @@ if(CPP_SHARED_REF_BUILD_TESTS)
 endif()
 
 message(STATUS "cpp-shared-ref: Building tests: ${CPP_SHARED_REF_BUILD_TESTS}")
+message(STATUS "cpp-shared-ref: Sanitizers: ${CPP_SHARED_REF_ASAN}")

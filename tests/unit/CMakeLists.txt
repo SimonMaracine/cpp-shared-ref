@@ -15,18 +15,13 @@ add_executable(test_unit
 
 target_link_libraries(test_unit PRIVATE cpp_shared_ref GTest::gtest_main)
 
+set_compile_options_and_features(test_unit)
+
 if(UNIX)
-    target_compile_options(test_unit PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-Wconversion" "-fno-elide-constructors")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(test_unit PRIVATE "/W4")
-else()
-    message(WARNING "Warnings are not enabled")
+    target_compile_options(test_unit PRIVATE "-fno-elide-constructors")
 endif()
 
-target_compile_features(test_unit PRIVATE cxx_std_17)
-set_target_properties(test_unit PROPERTIES CXX_EXTENSIONS OFF)
-
 if(UNIX AND CPP_SHARED_REF_ASAN)
-    target_compile_options(test_unit PRIVATE "-fsanitize=address" "-fsanitize=undefined" "-g" "-fno-omit-frame-pointer" "-libasan")
+    target_compile_options(test_unit PRIVATE "-fsanitize=address" "-fsanitize=undefined" "-g" "-fno-omit-frame-pointer")
     target_link_options(test_unit PRIVATE "-fsanitize=address" "-fsanitize=undefined")
 endif()
