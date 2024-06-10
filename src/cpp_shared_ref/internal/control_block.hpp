@@ -4,7 +4,6 @@
 #include <utility>
 #include <typeinfo>
 #include <memory>  // std::addressof
-#include <type_traits>
 
 namespace sm {
     namespace internal {
@@ -67,9 +66,7 @@ namespace sm {
             }
 
             void dispose() const noexcept override {
-                if constexpr (!std::is_trivially_destructible_v<T>) {
-                    impl.object.~T();
-                }
+                impl.object.~T();
             }
 
             void* get_deleter(const std::type_info&) noexcept override {
