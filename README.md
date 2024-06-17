@@ -8,8 +8,8 @@ that the reference increments and decrements are not atomic. The premise is that
 can be very useful in contexts outside of multithreading, in which atomicity is not needed, being just useless
 overhead. This is why I tried making my own version of `std::shared_ptr`.
 
-Right now, `shared_ref` doesn't fully conform to the `std::shared_ptr` specification of `C++17`. This is probably
-an incomplete list of missing features from my version:
+Right now, `shared_ref` doesn't fully conform to the `std::shared_ptr` specification of `C++17`. This is
+a list of missing features from my version:
 
 - Not allocator-aware
 - No support for arrays
@@ -27,7 +27,7 @@ up an issue.
 With CMake, you can use this library as a submodule:
 
 ```txt
-git submodule add https://github.com/SimonMaracine/cpp-shared-ref <path/to/submodule>
+git submodule add -b stable -- https://github.com/SimonMaracine/cpp-shared-ref <path/to/submodule>
 ```
 
 ```cmake
@@ -40,6 +40,8 @@ To build with tests:
 ```cmake
 set(CPP_SHARED_REF_BUILD_TESTS ON)
 ```
+
+Development takes place on the `main` branch. The `stable` branch is meant to be used.
 
 ## Example
 
