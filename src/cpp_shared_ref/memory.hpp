@@ -310,9 +310,7 @@ namespace sm {
 
         template<typename U>
         struct has_sft_base<U, std::void_t<
-            decltype(std::declval<U>().shared_from_this()),  // TODO not the best
-            decltype(std::declval<U>().weak_from_this()),
-            decltype(std::declval<U>().weak_this)
+            decltype(enable_shared_from_this_base(static_cast<U*>(nullptr)))
         >> : std::true_type {};
 
         template<typename U, typename U2 = std::remove_cv_t<U>>
@@ -835,6 +833,8 @@ namespace sm {
         enable_shared_from_this(const enable_shared_from_this& other) noexcept {}
         enable_shared_from_this& operator=(const enable_shared_from_this& other) noexcept { return *this; }
     private:
+        friend const enable_shared_from_this* enable_shared_from_this_base(const enable_shared_from_this* p) { return p; }
+
         mutable weak_ref<T> weak_this;
 
         template<typename U>

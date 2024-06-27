@@ -2,7 +2,7 @@
 #include <cpp_shared_ref/memory.hpp>
 
 struct SharingBase : public sm::enable_shared_from_this<SharingBase> {
-    SharingBase(int foo)
+    explicit SharingBase(int foo)
         : foo(foo) {}
 
     virtual ~SharingBase() = default;
