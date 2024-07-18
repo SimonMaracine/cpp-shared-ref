@@ -16,8 +16,8 @@ a list of missing features from my version:
 - No support for `-fno-exceptions`
 - Deprecated features as of `C++17` are missing (for good)
 
-The code is unit-tested. Almost all public functionality is tested. Also Valgrind is regularly used in development
-to check for memory bugs. Tested compilation on `GCC 13.2` and `MSVC 19.39`.
+The code is unit-tested. Valgrind is used from time to time in development to check for memory bugs.
+Tested compilation on `GCC 14.1` and `MSVC 19.39`.
 
 If you need a specific missing feature, or need this library to work on lower versions of C++, feel free to open
 up an issue.
@@ -59,7 +59,7 @@ int main() {
         foo = bar;
     }
 
-    auto baz {foo.lock()};
+    sm::shared_ref<int> baz {foo.lock()};
 
     if (baz) {
         std::cout << "This never gets printed\n";

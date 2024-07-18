@@ -116,8 +116,6 @@ namespace sm {
                 m_base = block;
             }
 
-            // Helper methods
-
             void destroy() const noexcept {
                 m_base->destroy();
             }
