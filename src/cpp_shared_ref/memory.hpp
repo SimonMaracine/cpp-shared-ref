@@ -43,7 +43,7 @@ namespace sm {
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U>
         explicit shared_ref(U* ptr)
-            : ptr(ptr), block(ptr) {
+            : m_ptr(ptr), m_block(ptr) {
             check_shared_from_this(ptr);
         }
 
@@ -52,22 +52,22 @@ namespace sm {
         // If construction fails by a std::bad_alloc, the object is deleted
         template<typename U, typename Deleter>
         shared_ref(U* ptr, Deleter deleter)
-            : ptr(ptr), block(ptr, std::move(deleter)) {
+            : m_ptr(ptr), m_block(ptr, std::move(deleter)) {
             check_shared_from_this(ptr);
         }
 
         // Construct an empty shared_ref with this deleter
         template<typename Deleter>
         shared_ref(std::nullptr_t, Deleter deleter)
-            : block(static_cast<T*>(nullptr), std::move(deleter)) {}
+            : m_block(static_cast<T*>(nullptr), std::move(deleter)) {}
 
         // Aliasing constructor
         // Construct a shared_ref that shares ownership with another shared_ref, but stores a pointer to another object
         template<typename U>
         shared_ref(const shared_ref<U>& other, T* ptr) noexcept
-            : ptr(ptr), block(other.block) {
-            if (block) {
-                block.base->strong_count++;
+            : m_ptr(ptr), m_block(other.m_block) {
+            if (m_block) {
+                m_block.strong_count()++;
             }
         }
 
@@ -79,10 +79,10 @@ namespace sm {
                 throw bad_weak_ref();
             }
 
-            ptr = ref.ptr;
-            block = ref.block;
+            m_ptr = ref.m_ptr;
+            m_block = ref.m_block;
 
-            block.base->strong_count++;
+            m_block.strong_count()++;
         }
 
         // Construct a shared_ref that takes ownership from a unique_ptr
@@ -100,8 +100,8 @@ namespace sm {
         shared_ref& operator=(std::unique_ptr<U, Deleter>&& ref) {
             destroy_this();
 
-            ptr = ref.release();
-            block = internal::ControlBlock(ptr, std::move(ref.get_deleter()));
+            m_ptr = ref.release();
+            m_block = internal::ControlBlock(m_ptr, std::move(ref.get_deleter()));
 
             return *this;
         }
@@ -109,9 +109,9 @@ namespace sm {
         // Copy constructor
         // Construct a shared_ref that shares ownership with another shared_ref
         shared_ref(const shared_ref& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            if (block) {
-                block.base->strong_count++;
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            if (m_block) {
+                m_block.strong_count()++;
             }
         }
 
@@ -119,9 +119,9 @@ namespace sm {
         // Construct a shared_ref that shares ownership with another shared_ref
         template<typename U>
         shared_ref(const shared_ref<U>& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            if (block) {
-                block.base->strong_count++;
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            if (m_block) {
+                m_block.strong_count()++;
             }
         }
 
@@ -130,11 +130,11 @@ namespace sm {
         shared_ref& operator=(const shared_ref& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            if (block) {
-                block.base->strong_count++;
+            if (m_block) {
+                m_block.strong_count()++;
             }
 
             return *this;
@@ -146,11 +146,11 @@ namespace sm {
         shared_ref& operator=(const shared_ref<U>& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            if (block) {
-                block.base->strong_count++;
+            if (m_block) {
+                m_block.strong_count()++;
             }
 
             return *this;
@@ -159,18 +159,18 @@ namespace sm {
         // Move constructor
         // Move-construct a shared_ref from another shared_ref
         shared_ref(shared_ref&& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            other.ptr = nullptr;
-            other.block = {};
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            other.m_ptr = nullptr;
+            other.m_block = {};
         }
 
         // Move constructor
         // Move-construct a shared_ref from another shared_ref
         template<typename U>
         shared_ref(shared_ref<U>&& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            other.ptr = nullptr;
-            other.block = {};
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            other.m_ptr = nullptr;
+            other.m_block = {};
         }
 
         // Move assignment
@@ -178,11 +178,11 @@ namespace sm {
         shared_ref& operator=(shared_ref&& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            other.ptr = nullptr;
-            other.block = {};
+            other.m_ptr = nullptr;
+            other.m_block = {};
 
             return *this;
         }
@@ -193,11 +193,11 @@ namespace sm {
         shared_ref& operator=(shared_ref<U>&& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            other.ptr = nullptr;
-            other.block = {};
+            other.m_ptr = nullptr;
+            other.m_block = {};
 
             return *this;
         }
@@ -205,28 +205,28 @@ namespace sm {
         // Get the stored object pointer
         // Note that this might be different from the managed object
         T* get() const noexcept {
-            return ptr;
+            return m_ptr;
         }
 
         // Get a reference to the stored object
         // Note that this might be different from the managed object
         T& operator*() const noexcept {
-            return *ptr;
+            return *m_ptr;
         }
 
         // Get the stored object pointer
         // Note that this might be different from the managed object
         T* operator->() const noexcept {
-            return ptr;
+            return m_ptr;
         }
 
         // Get the reference count
         std::size_t use_count() const noexcept {
-            if (!block) {
+            if (!m_block) {
                 return 0;
             }
 
-            return block.base->strong_count;
+            return m_block.strong_count();
         }
 
         // Check if the managed object has only one reference
@@ -236,27 +236,27 @@ namespace sm {
 
         // Check if the stored pointer is not null
         operator bool() const noexcept {
-            return ptr != nullptr;
+            return m_ptr != nullptr;
         }
 
         // Check if this shared_ref precedes the other
         template<typename U>
         bool owner_before(const shared_ref<U>& other) const noexcept {
-            return block.base < other.block.base;
+            return m_block.base() < other.m_block.base();
         }
 
         // Check if this shared_ref precedes the weak_ref
         template<typename U>
         bool owner_before(const weak_ref<U>& other) const noexcept {
-            return block.base < other.block.base;
+            return m_block.base() < other.m_block.base();
         }
 
         // Reset this shared_ref
         void reset() noexcept {
             destroy_this();
 
-            ptr = nullptr;
-            block = {};
+            m_ptr = nullptr;
+            m_block = {};
         }
 
         // Reset this shared_ref and instead manage an existing object created using new
@@ -265,8 +265,8 @@ namespace sm {
         void reset(U* ptr) {
             destroy_this();
 
-            this->ptr = ptr;
-            block = internal::ControlBlock(ptr);
+            m_ptr = ptr;
+            m_block = internal::ControlBlock(ptr);
 
             check_shared_from_this(ptr);
         }
@@ -278,29 +278,29 @@ namespace sm {
         void reset(U* ptr, Deleter deleter) {
             destroy_this();
 
-            this->ptr = ptr;
-            block = internal::ControlBlock(ptr, std::move(deleter));
+            m_ptr = ptr;
+            m_block = internal::ControlBlock(ptr, std::move(deleter));
 
             check_shared_from_this(ptr);
         }
 
         // Swap this shared_ref object with another one
         void swap(shared_ref& other) noexcept {
-            std::swap(ptr, other.ptr);
-            std::swap(block, other.block);
+            std::swap(m_ptr, other.m_ptr);
+            std::swap(m_block, other.m_block);
         }
     private:
         void destroy_this() noexcept {
-            if (!block) {
+            if (!m_block) {
                 return;
             }
 
-            if (--block.base->strong_count == 0) {
-                ptr = nullptr;
-                block.base->dispose();
+            if (--m_block.strong_count() == 0) {
+                m_ptr = nullptr;
+                m_block.destroy();
 
-                if (--block.base->weak_count == 0) {
-                    block.destroy();
+                if (--m_block.weak_count() == 0) {
+                    m_block.dispose();
                 }
             }
         }
@@ -316,19 +316,19 @@ namespace sm {
         template<typename U, typename U2 = std::remove_cv_t<U>>
         std::enable_if_t<has_sft_base<U2>::value>
         check_shared_from_this(U* ptr) noexcept {
-            if (!this->ptr->weak_this.expired()) {
+            if (!m_ptr->weak_this.expired()) {
                 return;
             }
 
-            this->ptr->weak_this.assign(const_cast<U2*>(ptr), block);
+            m_ptr->weak_this.assign(const_cast<U2*>(ptr), m_block);
         }
 
         template<typename U>
         std::enable_if_t<!has_sft_base<U>::value>
         check_shared_from_this(U*) noexcept {}
 
-        T* ptr {nullptr};
-        internal::ControlBlock block;
+        T* m_ptr {nullptr};
+        internal::ControlBlock m_block;
 
         template<typename U, typename... Args>
         friend shared_ref<U> make_shared(Args&&... args);
@@ -347,8 +347,8 @@ namespace sm {
     template<typename T, typename... Args>
     shared_ref<T> make_shared(Args&&... args) {
         shared_ref<T> ref;
-        ref.block = internal::ControlBlock(ref.ptr, internal::MakeSharedTag(), std::forward<Args>(args)...);
-        ref.check_shared_from_this(ref.ptr);
+        ref.m_block = internal::ControlBlock(ref.m_ptr, internal::MakeSharedTag(), std::forward<Args>(args)...);
+        ref.check_shared_from_this(ref.m_ptr);
 
         return ref;
     }
@@ -392,7 +392,7 @@ namespace sm {
     // Get a pointer to the deleter of the shared_ref object, or nullptr, if it doesn't have a custom deleter
     template<typename Deleter, typename T>
     Deleter* get_deleter(const shared_ref<T>& ref) noexcept {
-        return static_cast<Deleter*>(ref.block.base->get_deleter(typeid(Deleter)));
+        return static_cast<Deleter*>(ref.m_block.get_deleter(typeid(Deleter)));
     }
 }
 
@@ -525,9 +525,9 @@ namespace sm {
         // Construct a weak_ref that shares ownership with a shared_ref
         // Don't keep the managed object alive, if the last (strong) reference is destroyed
         weak_ref(const shared_ref<T>& ref) noexcept
-            : ptr(ref.ptr), block(ref.block) {
-            if (block) {
-                block.base->weak_count++;
+            : m_ptr(ref.m_ptr), m_block(ref.m_block) {
+            if (m_block) {
+                m_block.weak_count()++;
             }
         }
 
@@ -541,11 +541,11 @@ namespace sm {
         weak_ref& operator=(const shared_ref<U>& ref) noexcept {
             destroy_this();
 
-            ptr = ref.ptr;
-            block = ref.block;
+            m_ptr = ref.m_ptr;
+            m_block = ref.m_block;
 
-            if (block) {
-                block.base->weak_count++;
+            if (m_block) {
+                m_block.weak_count()++;
             }
 
             return *this;
@@ -554,9 +554,9 @@ namespace sm {
         // Copy constructor
         // Construct a weak_ref that shares ownership with another weak_ref
         weak_ref(const weak_ref& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            if (block) {
-                block.base->weak_count++;
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            if (m_block) {
+                m_block.weak_count()++;
             }
         }
 
@@ -564,9 +564,9 @@ namespace sm {
         // Construct a weak_ref that shares ownership with another weak_ref
         template<typename U>
         weak_ref(const weak_ref<U>& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            if (block) {
-                block.base->weak_count++;
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            if (m_block) {
+                m_block.weak_count()++;
             }
         }
 
@@ -575,11 +575,11 @@ namespace sm {
         weak_ref<T>& operator=(const weak_ref& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            if (block) {
-                block.base->weak_count++;
+            if (m_block) {
+                m_block.weak_count()++;
             }
 
             return *this;
@@ -591,11 +591,11 @@ namespace sm {
         weak_ref<T>& operator=(const weak_ref<U>& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            if (block) {
-                block.base->weak_count++;
+            if (m_block) {
+                m_block.weak_count()++;
             }
 
             return *this;
@@ -604,18 +604,18 @@ namespace sm {
         // Move constructor
         // Move-construct a weak_ref from another weak_ref
         weak_ref(weak_ref&& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            other.ptr = nullptr;
-            other.block = {};
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            other.m_ptr = nullptr;
+            other.m_block = {};
         }
 
         // Move constructor
         // Move-construct a weak_ref from another weak_ref
         template<typename U>
         weak_ref(weak_ref<U>&& other) noexcept
-            : ptr(other.ptr), block(other.block) {
-            other.ptr = nullptr;
-            other.block = {};
+            : m_ptr(other.m_ptr), m_block(other.m_block) {
+            other.m_ptr = nullptr;
+            other.m_block = {};
         }
 
         // Move assignment
@@ -623,11 +623,11 @@ namespace sm {
         weak_ref<T>& operator=(weak_ref&& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            other.ptr = nullptr;
-            other.block = {};
+            other.m_ptr = nullptr;
+            other.m_block = {};
 
             return *this;
         }
@@ -638,22 +638,22 @@ namespace sm {
         weak_ref<T>& operator=(weak_ref<U>&& other) noexcept {
             destroy_this();
 
-            ptr = other.ptr;
-            block = other.block;
+            m_ptr = other.m_ptr;
+            m_block = other.m_block;
 
-            other.ptr = nullptr;
-            other.block = {};
+            other.m_ptr = nullptr;
+            other.m_block = {};
 
             return *this;
         }
 
         // Get the (strong) reference count
         std::size_t use_count() const noexcept {
-            if (!block) {
+            if (!m_block) {
                 return 0;
             }
 
-            return block.base->strong_count;
+            return m_block.strong_count();
         }
 
         // Check if the managed object has been deleted
@@ -667,10 +667,10 @@ namespace sm {
             shared_ref<T> ref;
 
             if (!expired()) {
-                ref.ptr = ptr;
-                ref.block = block;
+                ref.m_ptr = m_ptr;
+                ref.m_block = m_block;
 
-                block.base->strong_count++;
+                ref.m_block.strong_count()++;
             }
 
             return ref;
@@ -679,51 +679,51 @@ namespace sm {
         // Check if this weak_ref precedes the other
         template<typename U>
         bool owner_before(const weak_ref<U>& other) const noexcept {
-            return block.base < other.block.base;
+            return m_block.base() < other.m_block.base();
         }
 
         // Check if this weak_ref precedes the shared_ref
         template<typename U>
         bool owner_before(const shared_ref<U>& other) const noexcept {
-            return block.base < other.block.base;
+            return m_block.base() < other.m_block.base();
         }
 
         // Reset this weak_ref
         void reset() noexcept {
             destroy_this();
 
-            ptr = nullptr;
-            block = {};
+            m_ptr = nullptr;
+            m_block = {};
         }
 
         // Swap this weak_ref object with another one
         void swap(weak_ref& other) noexcept {
-            std::swap(ptr, other.ptr);
-            std::swap(block, other.block);
+            std::swap(m_ptr, other.m_ptr);
+            std::swap(m_block, other.m_block);
         }
     private:
         void destroy_this() noexcept {
-            if (!block) {
+            if (!m_block) {
                 return;
             }
 
-            if (--block.base->weak_count == 0 && block.base->strong_count == 0) {
-                block.destroy();
+            if (--m_block.weak_count() == 0 && m_block.strong_count() == 0) {
+                m_block.dispose();
             }
         }
 
         template<typename U>
         void assign(U* ptr, internal::ControlBlock block) noexcept {
-            this->ptr = ptr;
-            this->block = block;
+            m_ptr = ptr;
+            m_block = block;
 
-            if (block) {
-                block.base->weak_count++;
+            if (m_block) {
+                m_block.weak_count()++;
             }
         }
 
-        T* ptr {nullptr};
-        internal::ControlBlock block;
+        T* m_ptr {nullptr};
+        internal::ControlBlock m_block;
 
         template<typename U>
         friend class shared_ref;
